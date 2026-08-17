@@ -1,0 +1,17 @@
+{
+  "network": "algorand:testnet",
+  "deployedAt": "2026-08-17T00:00:00.000Z",
+  "authorityAddress": "PLACEHOLDER_AUTHORITY",
+  "registry": {
+    "appId": 0,
+    "address": "PLACEHOLDER_REGISTRY"
+  },
+  "pool": {
+    "appId": 0,
+    "address": "PLACEHOLDER_POOL"
+  },
+  "settler": {
+    "appId": 0,
+    "address": "PLACEHOLDER_SETTLER"
+  }
+}

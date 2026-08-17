@@ -1,0 +1,40 @@
+{
+  "name": "x500-algorand",
+  "version": "0.1.0",
+  "private": false,
+  "description": "x500 Algorand CLI — insured API calls and x402 USDC payments on Algorand testnet",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "x500-algorand": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "node -e \"process.exit(0)\"",
+    "prepublishOnly": "tsc"
+  },
+  "dependencies": {
+    "x500-sdk-algorand": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.3"
+  }
+}

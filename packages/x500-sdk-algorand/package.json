@@ -1,0 +1,44 @@
+{
+  "name": "x500-sdk-algorand",
+  "version": "0.1.0",
+  "private": false,
+  "description": "x500 Algorand agent SDK — insured fetch + x402 USDC payments on Algorand testnet",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md",
+    "!dist/**/*.test.js",
+    "!dist/**/*.test.d.ts"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "tsc && node -e \"const fs=require('fs');for (const f of fs.readdirSync('dist')) if (f.includes('.test.')) fs.unlinkSync('dist/'+f)\""
+  },
+  "dependencies": {
+    "@x402-avm/avm": "^2.6.1",
+    "@x402-avm/core": "^2.6.1",
+    "@x402-avm/fetch": "^2.6.1",
+    "@x500/protocol-algorand-v1-client": "workspace:*",
+    "algosdk": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.0"
+  }
+}

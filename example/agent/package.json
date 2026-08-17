@@ -1,0 +1,22 @@
+{
+  "name": "@x500/example-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx --env-file=.env src/main.ts",
+    "start": "tsx --env-file=.env src/main.ts"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.42",
+    "@langchain/groq": "^0.2.2",
+    "@langchain/langgraph": "^0.2.74",
+    "x500-sdk-algorand": "workspace:*",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}
