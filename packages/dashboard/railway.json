@@ -1,0 +1,19 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "RAILPACK",
+    "buildCommand": "pnpm --filter @x500/dashboard... build",
+    "watchPatterns": [
+      "packages/dashboard/**",
+      "packages/protocol-algorand-v1-client/**",
+      "pnpm-lock.yaml",
+      "pnpm-workspace.yaml",
+      "package.json"
+    ]
+  },
+  "deploy": {
+    "startCommand": "pnpm --filter @x500/dashboard start",
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  }
+}

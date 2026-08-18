@@ -22,12 +22,12 @@ export {
   encodeSettlerInit,
   decodeEndpointConfig,
   bytes16ToSlug,
-  loadDeployments,
   type DeployedApp,
   type TestnetDeployments,
   type DecodedEndpointConfig,
   type SettleBatchCallInput,
 } from "./encoders.js";
+export { loadDeployments } from "./deployments.js";
 export {
   indexerBaseUrl,
   algodBaseUrl,

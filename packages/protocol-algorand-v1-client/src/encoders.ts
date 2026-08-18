@@ -1,5 +1,3 @@
-import { readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
 import { ABIContract, ABIType, ABIUintType } from "algosdk";
 
 export const PACKAGE_NAME = "x500-protocol-algorand-v1-client" as const;
@@ -45,23 +43,6 @@ export interface TestnetDeployments {
   registry: DeployedApp;
   pool: DeployedApp;
   settler: DeployedApp;
-}
-
-export function loadDeployments(
-  path = join(process.cwd(), "config", "deployments.algorand.testnet.json"),
-): TestnetDeployments {
-  if (!existsSync(path)) {
-    throw new Error(
-      `Missing deployments file ${path}. Run pnpm protocol:deploy first.`,
-    );
-  }
-  const d = JSON.parse(readFileSync(path, "utf8")) as TestnetDeployments;
-  if (d.network !== ALGORAND_TESTNET) {
-    throw new Error(
-      `deployments.network must be ${ALGORAND_TESTNET}, got ${d.network}`,
-    );
-  }
-  return d;
 }
 
 export interface DecodedEndpointConfig {

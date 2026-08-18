@@ -89,15 +89,13 @@ export async function submitEndpointWithWallet(opts: {
   };
 
   if (opts.mode === "register") {
-    const appArgs = [
-      encodeRegisterEndpoint({
-        slug: opts.slug,
-        hostname: opts.hostname,
-        apiPriceMicroUsdc: opts.apiPriceMicroUsdc,
-        contactAddress: opts.contactAddress,
-        slaLatencyMs,
-      }),
-    ];
+    const appArgs = encodeRegisterEndpoint({
+      slug: opts.slug,
+      hostname: opts.hostname,
+      apiPriceMicroUsdc: opts.apiPriceMicroUsdc,
+      contactAddress: opts.contactAddress,
+      slaLatencyMs,
+    });
     const transactionId = await signAndSubmitAppCall({
       appId: opts.registryAppId,
       sender: opts.session.address,
@@ -108,14 +106,12 @@ export async function submitEndpointWithWallet(opts: {
     return { transactionId, updated: false };
   }
 
-  const updateArgs = [
-    encodeUpdateEndpoint({
-      slug: opts.slug,
-      hostname: opts.hostname,
-      apiPriceMicroUsdc: opts.apiPriceMicroUsdc,
-      contactAddress: opts.contactAddress,
-    }),
-  ];
+  const updateArgs = encodeUpdateEndpoint({
+    slug: opts.slug,
+    hostname: opts.hostname,
+    apiPriceMicroUsdc: opts.apiPriceMicroUsdc,
+    contactAddress: opts.contactAddress,
+  });
   const transactionId = await signAndSubmitAppCall({
     appId: opts.registryAppId,
     sender: opts.session.address,
@@ -128,7 +124,7 @@ export async function submitEndpointWithWallet(opts: {
     await signAndSubmitAppCall({
       appId: opts.registryAppId,
       sender: opts.session.address,
-      appArgs: [encodeSetEndpointSla(opts.slug, slaLatencyMs)],
+      appArgs: encodeSetEndpointSla(opts.slug, slaLatencyMs),
       transactionSigner: opts.transactionSigner,
       boxes: [boxRef],
     });

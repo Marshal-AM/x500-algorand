@@ -1,0 +1,23 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "RAILPACK",
+    "buildCommand": "pnpm --filter @x500/indexer... build",
+    "watchPatterns": [
+      "packages/indexer/**",
+      "packages/db-algorand/**",
+      "packages/shared/**",
+      "packages/protocol-algorand-v1-client/**",
+      "config/deployments.algorand.testnet.json",
+      "pnpm-lock.yaml",
+      "pnpm-workspace.yaml",
+      "package.json"
+    ]
+  },
+  "deploy": {
+    "startCommand": "pnpm --filter @x500/indexer start",
+    "healthcheckPath": "/health",
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  }
+}

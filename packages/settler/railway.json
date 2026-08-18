@@ -1,0 +1,25 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "RAILPACK",
+    "buildCommand": "pnpm --filter @x500/settler... build",
+    "watchPatterns": [
+      "packages/settler/**",
+      "packages/wrap/**",
+      "packages/classifier/**",
+      "packages/db-algorand/**",
+      "packages/shared/**",
+      "packages/protocol-algorand-v1-client/**",
+      "config/deployments.algorand.testnet.json",
+      "pnpm-lock.yaml",
+      "pnpm-workspace.yaml",
+      "package.json"
+    ]
+  },
+  "deploy": {
+    "startCommand": "pnpm --filter @x500/settler start",
+    "healthcheckPath": "/health",
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  }
+}
