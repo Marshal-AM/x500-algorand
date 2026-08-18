@@ -4,6 +4,21 @@ import { loadDeployments } from "x500-protocol-algorand-v1-client";
 import { resolveDeploymentsPath } from "@x500/shared";
 import { SupabaseService } from "./supabase.service.js";
 
+function originKey(value: string | null | undefined): string | null {
+  if (!value?.trim()) return null;
+  const trimmed = value.trim();
+  const withScheme =
+    trimmed.startsWith("http://") || trimmed.startsWith("https://")
+      ? trimmed
+      : `https://${trimmed}`;
+  try {
+    const url = new URL(withScheme);
+    return `${url.protocol}//${url.host}`.replace(/\/$/, "").toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
 @Controller("api")
 export class ApiController {
   constructor(@Inject(SupabaseService) private readonly db: SupabaseService) {}
@@ -51,17 +66,24 @@ export class ApiController {
       return { error: "invalid origin URL" };
     }
 
-    const { data, error } = await this.db.client
+    const selectCols =
+      "slug, hostname, sla_ms, flat_premium_micro_algos, api_price_micro_usdc, imputed_cost_micro_algos, contact_address, paused";
+    const exact = await this.db.client
       .from("endpoints")
-      .select(
-        "slug, hostname, sla_ms, flat_premium_micro_algos, api_price_micro_usdc, imputed_cost_micro_algos, contact_address, paused",
-      )
+      .select(selectCols)
       .eq("hostname", normalized)
       .order("slug", { ascending: false })
       .limit(1);
 
-    if (error) return { error: error.message };
-    const row = data?.[0];
+    if (exact.error) return { error: exact.error.message };
+    let row = exact.data?.[0];
+    if (!row) {
+      const listed = await this.db.client.from("endpoints").select(selectCols);
+      if (listed.error) return { error: listed.error.message };
+      row = (listed.data ?? []).find(
+        (ep) => originKey(ep.hostname) === normalized.toLowerCase(),
+      );
+    }
     if (!row) {
       return {
         error: `no endpoint registered for origin ${normalized}`,

@@ -78,7 +78,10 @@ export class MerchantRegisterService {
     const slaMs = this.validateSlaMs(input.slaMs);
 
     for (let attempt = 0; attempt < 8; attempt++) {
-      await this.sync.syncNow();
+      const wrote = await this.sync.syncEndpoint(slug);
+      if (!wrote) {
+        await this.sync.syncNow();
+      }
       const { data, error } = await this.db.client
         .from("endpoints")
         .select(
@@ -89,11 +92,14 @@ export class MerchantRegisterService {
       if (error) {
         throw new Error(`Supabase endpoints lookup failed: ${error.message}`);
       }
-      if (data?.hostname === hostname) {
-        if (slaMs !== undefined) {
+      if (data?.slug === slug) {
+        const patch: Record<string, unknown> = {};
+        if (hostname && hostname !== data.hostname) patch.hostname = hostname;
+        if (slaMs !== undefined) patch.sla_ms = slaMs;
+        if (Object.keys(patch).length > 0) {
           const { error: slaErr } = await this.db.client
             .from("endpoints")
-            .update({ sla_ms: slaMs })
+            .update(patch)
             .eq("slug", slug);
           if (slaErr) {
             throw new Error(`Supabase SLA update failed: ${slaErr.message}`);
@@ -107,7 +113,7 @@ export class MerchantRegisterService {
         return {
           ok: true,
           slug,
-          hostname: data.hostname,
+          hostname: hostname || data.hostname,
           apiPriceMicroUsdc: String(data.api_price_micro_usdc ?? 5000),
           transactionId,
           alreadyRegistered: attempt > 0,
