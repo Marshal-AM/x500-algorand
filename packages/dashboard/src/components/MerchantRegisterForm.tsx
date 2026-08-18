@@ -117,8 +117,16 @@ function SlugStatus({ preflight }: { preflight: SlugPreflight | null }) {
 }
 
 export function MerchantRegisterForm() {
-  const { session, connect, connecting, ready, transactionSigner } =
-    useAlgorandWallet();
+  const {
+    session,
+    wallets,
+    connect,
+    disconnect,
+    connecting,
+    connectingId,
+    ready,
+    transactionSigner,
+  } = useAlgorandWallet();
   const [step, setStep] = useState(0);
   const [slug, setSlug] = useState("");
   const [hostname, setHostname] = useState("");
@@ -205,7 +213,10 @@ export function MerchantRegisterForm() {
   async function validateStep(current: number): Promise<boolean> {
     if (current === 0) {
       if (!session?.address) {
-        appToast.error("Wallet required", "Connect Pera or Defly to continue.");
+        appToast.error(
+          "Wallet required",
+          "Connect Pera, Defly, or Lute to continue.",
+        );
         return false;
       }
       if (!registryAppId) {
@@ -426,25 +437,47 @@ export function MerchantRegisterForm() {
           </div>
 
           {session ? (
-            <p className="flex items-center gap-2 text-sm text-success">
-              <CheckCircle2 className="size-4" />
-              Connected as <InlineCode>{session.address}</InlineCode>
-            </p>
-          ) : null}
-
-          <Button
-            type="button"
-            onClick={() => void connect()}
-            disabled={!ready || connecting || !!session}
-            size="lg"
-            className="w-full"
-          >
-            {connecting
-              ? "Connecting…"
-              : session
-                ? "Connected"
-                : "Connect Pera / Defly"}
-          </Button>
+            <div className="space-y-3">
+              <p className="flex items-center gap-2 text-sm text-success">
+                <CheckCircle2 className="size-4" />
+                Connected as <InlineCode>{session.address}</InlineCode>
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void disconnect()}
+                className="w-full"
+              >
+                Disconnect
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-2">
+              {wallets.map((wallet) => (
+                <Button
+                  key={wallet.id}
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  className="w-full justify-start"
+                  onClick={() => void connect(wallet.id)}
+                  disabled={!ready || connecting}
+                >
+                  {wallet.metadata.icon ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={wallet.metadata.icon}
+                      alt=""
+                      className="size-5 rounded-sm"
+                    />
+                  ) : null}
+                  {connectingId === wallet.id
+                    ? "Connecting…"
+                    : `Connect ${wallet.metadata.name}`}
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -459,7 +492,9 @@ export function MerchantRegisterForm() {
               onChange={(e) => setSlug(e.target.value)}
               placeholder="my-api"
               required
-              pattern="[a-z0-9]([a-z0-9-]{0,14}[a-z0-9])?"
+              maxLength={16}
+              autoComplete="off"
+              spellCheck={false}
               aria-invalid={
                 slugPreflight != null && !slugPreflight.canProceed
                   ? true
@@ -511,7 +546,6 @@ export function MerchantRegisterForm() {
               placeholder="30"
               required
               inputMode="numeric"
-              pattern="[0-9]+"
             />
             <FieldDescription>
               Calls slower than this may be treated as breaches. Use 30–60s for
@@ -529,7 +563,6 @@ export function MerchantRegisterForm() {
               placeholder="0.01"
               required
               inputMode="decimal"
-              pattern="\d+(\.\d{1,6})?"
             />
             <FieldDescription>
               Charged per paid request. Insurance premium uses the platform
@@ -546,7 +579,8 @@ export function MerchantRegisterForm() {
               onChange={(e) => setContactAddress(e.target.value)}
               placeholder="ABCDEF...58charAlgorandAddress"
               required
-              pattern="[A-Z2-7]{58}"
+              spellCheck={false}
+              autoComplete="off"
             />
             <FieldDescription>
               Receives API payments. Defaults to your connected wallet.

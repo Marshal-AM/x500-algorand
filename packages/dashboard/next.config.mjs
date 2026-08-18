@@ -5,10 +5,14 @@ const nextConfig = {
     "@txnlab/use-wallet-react",
     "x500-protocol-algorand-v1-client",
   ],
-  webpack: (config) => {
+  webpack: (config, { webpack }) => {
+    config.plugins.push(
+      new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
+        resource.request = resource.request.replace(/^node:/, "");
+      }),
+    );
     config.resolve.alias = {
       ...config.resolve.alias,
-      "lute-connect": false,
       "@agoralabs-sh/avm-web-provider": false,
       "@magic-ext/algorand": false,
       "@magic-sdk/client": false,
@@ -16,8 +20,6 @@ const nextConfig = {
       "@web3auth/single-factor-auth": false,
       "@web3auth/base": false,
       "@web3auth/base-provider": false,
-      "node:fs": false,
-      "node:path": false,
     };
     config.resolve.fallback = {
       ...config.resolve.fallback,

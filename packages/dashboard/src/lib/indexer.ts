@@ -34,7 +34,7 @@ export function indexerBase(): string {
 
 export async function fetchIndexer<T>(path: string): Promise<T> {
   const res = await fetch(`${indexerBase()}${path}`, {
-    next: { revalidate: 15 },
+    cache: "no-store",
   });
   if (!res.ok) {
     throw new Error(`indexer ${path} → ${res.status}`);

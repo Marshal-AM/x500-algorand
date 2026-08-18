@@ -16,7 +16,7 @@ export default function MerchantsPage() {
           description="Register your public endpoint on testnet. Agents discover your service automatically and pay per call with coverage handled by the protocol."
           steps={[
             "Host an HTTP API with a public URL.",
-            "Choose a slug, set your price, and sign with Pera or Defly.",
+            "Choose a slug, set your price, and sign with Pera, Defly, or Lute.",
             "Agents reach your API through x500 — no extra integration.",
             "Premiums and refunds settle in ALGO automatically.",
           ]}

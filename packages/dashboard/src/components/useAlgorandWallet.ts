@@ -1,53 +1,76 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useWallet, WalletId } from "@txnlab/use-wallet-react";
+import { useWallet } from "@txnlab/use-wallet-react";
 import type { WalletSession } from "@/lib/algorand-wallet";
 import { appToast } from "@/lib/toast";
 
+function walletAddress(
+  wallet: { activeAccount: { address: string } | null },
+  accounts?: Array<{ address: string }>,
+): string | null {
+  return accounts?.[0]?.address ?? wallet.activeAccount?.address ?? null;
+}
+
 export function useAlgorandWallet() {
   const { activeAddress, wallets, isReady, transactionSigner } = useWallet();
-  const [connecting, setConnecting] = useState(false);
+  const [connectingId, setConnectingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const session: WalletSession | null = activeAddress
     ? { address: activeAddress }
     : null;
 
-  const connect = useCallback(async () => {
-    if (!wallets?.length) {
-      const message = "Install Pera or Defly wallet extension.";
-      setError(message);
-      appToast.error("No wallets available", message);
-      return;
-    }
-
-    setConnecting(true);
-    setError(null);
-    try {
-      const preferred =
-        wallets.find((w) => w.id === WalletId.DEFLY) ??
-        wallets.find((w) => w.id === WalletId.PERA) ??
-        wallets[0];
-      await preferred.connect();
-      const address = preferred.activeAccount?.address ?? activeAddress;
-      if (!address) {
-        throw new Error("No Algorand address returned from wallet");
+  const connect = useCallback(
+    async (walletId: string) => {
+      const wallet = wallets?.find((item) => item.id === walletId);
+      if (!wallet) {
+        const message = "That wallet is not available in this browser.";
+        setError(message);
+        appToast.error("Wallet unavailable", message);
+        return;
       }
-      appToast.success("Wallet connected", address);
+
+      setConnectingId(wallet.id);
+      setError(null);
+      try {
+        const active = wallets.find((item) => item.isActive && item.isConnected);
+        if (active && active.id !== wallet.id) {
+          await active.disconnect();
+        }
+        const accounts = await wallet.connect();
+        const address = walletAddress(wallet, accounts);
+        appToast.success("Wallet connected", address ?? undefined);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        setError(message);
+        appToast.error("Could not connect wallet", message);
+      } finally {
+        setConnectingId(null);
+      }
+    },
+    [wallets],
+  );
+
+  const disconnect = useCallback(async () => {
+    const active = wallets?.find((item) => item.isActive && item.isConnected);
+    if (!active) return;
+    try {
+      await active.disconnect();
+      appToast.success("Wallet disconnected");
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      setError(message);
-      appToast.error("Could not connect wallet", message);
-    } finally {
-      setConnecting(false);
+      appToast.error("Could not disconnect wallet", message);
     }
-  }, [activeAddress, wallets]);
+  }, [wallets]);
 
   return {
     session,
+    wallets: wallets ?? [],
     connect,
-    connecting,
+    disconnect,
+    connecting: connectingId != null,
+    connectingId,
     error,
     ready: isReady,
     transactionSigner,

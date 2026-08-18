@@ -1,4 +1,4 @@
-import { fetchIndexer, formatMicroAlgos, formatMicroUsdc } from "@/lib/indexer";
+import { fetchIndexer, formatMicroUsdc } from "@/lib/indexer";
 import { PageHeader } from "@/components/ui/Alert";
 import { Surface } from "@/components/ui/Surface";
 import { Badge } from "@/components/ui/Badge";
@@ -73,7 +73,7 @@ export default async function EndpointsPage() {
                     {formatMicroUsdc(ep.api_price_micro_usdc ?? 1_000_000)} USDC
                   </TableCell>
                   <TableCell align="right">
-                    {formatMicroAlgos(ep.flat_premium_micro_algos)} ALGO
+                    {formatMicroUsdc(ep.flat_premium_micro_algos)} USDC
                   </TableCell>
                   <TableCell>
                     {ep.paused ? (

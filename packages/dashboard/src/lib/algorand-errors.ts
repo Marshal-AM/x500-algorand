@@ -19,10 +19,23 @@ export function humanizeAlgorandError(err: unknown): string {
   if (msg.includes("InvalidSlug")) {
     return "Slug format is not accepted on-chain.";
   }
+  if (msg.includes("slug exists")) {
+    return "This slug is already registered. Reuse it to update your listing.";
+  }
+  if (msg.includes("invalid Box reference")) {
+    return "Registry box setup failed. Wait a moment and try again.";
+  }
+  if (msg.includes("logic eval error")) {
+    return "The registry rejected this transaction. Check the slug and try again.";
+  }
   if (msg.includes("rejected") || msg.includes("revert")) {
     return "The transaction was rejected by the registry application.";
   }
-  if (msg.includes("USER_REJECT") || msg.includes("cancelled")) {
+  if (
+    msg.includes("USER_REJECT") ||
+    msg.includes("cancelled") ||
+    msg.includes("rejected by user")
+  ) {
     return "Transaction was cancelled in your wallet.";
   }
 

@@ -9,8 +9,9 @@ import {
 } from "@txnlab/use-wallet-react";
 
 const supportedWallets: SupportedWallet[] = [
-  { id: WalletId.DEFLY },
   { id: WalletId.PERA },
+  { id: WalletId.DEFLY },
+  { id: WalletId.LUTE, options: { siteName: "x500" } },
 ];
 
 const algodServer =
@@ -31,6 +32,8 @@ const walletManager = new WalletManager({
         port: algodPort,
         token: algodToken,
       },
+      genesisId: network === "mainnet" ? "mainnet-v1.0" : "testnet-v1.0",
+      isTestnet: network !== "mainnet",
     },
   },
   options: {
