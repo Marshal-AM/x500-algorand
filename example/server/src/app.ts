@@ -164,12 +164,24 @@ export async function createExampleApp(
 }
 
 export async function startExampleServer(
-  port = Number(process.env.SERVER_PORT ?? 8800),
+  port = Number(process.env.PORT ?? process.env.SERVER_PORT ?? 8800),
 ): Promise<void> {
   const publicUrl = await resolvePublicOrigin(port);
+  let current: Hono = new Hono();
+  current.get("/health", (c) =>
+    c.json({
+      ok: true,
+      service: "example-merchant-server",
+      status: "waiting_for_registration",
+      origin: publicUrl,
+    }),
+  );
+
+  serve({ fetch: (req) => current.fetch(req), port }, () => {
+    console.log(`[example-server] listening on ${publicUrl}`);
+  });
 
   console.log(`[example-server] loading config from x500 indexer…`);
-
   const config = await waitForRegistration(publicUrl);
 
   const priceUsdc = (
@@ -182,13 +194,6 @@ export async function startExampleServer(
   console.log(`[example-server] api price: ${priceUsdc} USDC`);
   console.log(`[example-server] facilitator: ${DEFAULT_FACILITATOR_URL}`);
 
-  const app = await createExampleApp(config);
-
-  serve({ fetch: app.fetch, port }, () => {
-    console.log(`[example-server] listening on ${listenUrl}`);
-    console.log(`[example-server] paid route: GET ${listenUrl}/paid/weather?city=...`);
-    console.log(
-      `[example-server] test: curl -i ${listenUrl}/paid/weather?city=London`,
-    );
-  });
+  current = await createExampleApp(config);
+  console.log(`[example-server] paid route: GET ${listenUrl}/paid/weather?city=...`);
 }

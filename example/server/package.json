@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "tsx --env-file=.env src/main.ts",
-    "start": "tsx --env-file=.env src/main.ts",
+    "start": "tsx src/main.ts",
     "dev:slow": "tsx --env-file=.env src/main-slow.ts",
-    "start:slow": "tsx --env-file=.env src/main-slow.ts"
+    "start:slow": "tsx src/main-slow.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",

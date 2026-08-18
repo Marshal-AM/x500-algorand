@@ -5,10 +5,15 @@ import ngrok from "@ngrok/ngrok";
  * Falls back to http://127.0.0.1:{port} when ngrok is not configured.
  */
 export async function resolvePublicOrigin(port: number): Promise<string> {
-  const explicit = process.env.EXAMPLE_PUBLIC_ORIGIN?.trim();
+  const railwayDomain = process.env.RAILWAY_PUBLIC_DOMAIN?.trim();
+  const railwayOrigin = railwayDomain
+    ? `https://${railwayDomain.replace(/^https?:\/\//, "")}`
+    : "";
+  const explicit =
+    process.env.EXAMPLE_PUBLIC_ORIGIN?.trim() || railwayOrigin;
   if (explicit) {
     const origin = explicit.replace(/\/$/, "");
-    console.log(`[example-server] public origin (env): ${origin}`);
+    console.log(`[example-server] public origin: ${origin}`);
     return origin;
   }
 

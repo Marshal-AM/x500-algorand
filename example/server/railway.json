@@ -1,0 +1,20 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "RAILPACK",
+    "buildCommand": "pnpm --filter @x500/example-server... install",
+    "watchPatterns": [
+      "example/server/**",
+      "packages/x500-sdk-algorand/**",
+      "pnpm-lock.yaml",
+      "pnpm-workspace.yaml",
+      "package.json"
+    ]
+  },
+  "deploy": {
+    "startCommand": "pnpm --filter @x500/example-server start",
+    "healthcheckPath": "/health",
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  }
+}

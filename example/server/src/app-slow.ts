@@ -131,28 +131,38 @@ export async function createSlowExampleApp(
 }
 
 export async function startSlowExampleServer(
-  port = Number(process.env.SERVER_PORT ?? 8801),
+  port = Number(process.env.PORT ?? process.env.SERVER_PORT ?? 8801),
 ): Promise<void> {
   const publicUrl = await resolvePublicOrigin(port);
+  let current: Hono = new Hono();
+  current.get("/health", (c) =>
+    c.json({
+      ok: true,
+      service: "example-merchant-server-slow",
+      status: "waiting_for_registration",
+      origin: publicUrl,
+      slowResponseMs: SLOW_RESPONSE_MS,
+    }),
+  );
+
+  serve({ fetch: (req) => current.fetch(req), port }, () => {
+    console.log(`[example-server-slow] listening on ${publicUrl}`);
+  });
 
   console.log(
     `[example-server-slow] loading config from x500 indexer… (responds after ${SLOW_RESPONSE_MS}ms)`,
   );
-
   const config = await waitForRegistration(publicUrl);
+  const priceUsdc = (
+    Number(config.apiPriceMicroUsdc) / 1_000_000
+  ).toFixed(6);
 
   console.log(`[example-server-slow] registered slug: ${config.slug}`);
   console.log(`[example-server-slow] payTo: ${config.payTo} (from dashboard)`);
+  console.log(`[example-server-slow] api price: ${priceUsdc} USDC`);
+
+  current = await createSlowExampleApp(config);
   console.log(
-    `[example-server-slow] api price: ${config.apiPriceMicroUsdc} microUSDC`,
+    `[example-server-slow] paid route: GET ${publicUrl}/paid/weather?city=... (delays ${SLOW_RESPONSE_MS}ms)`,
   );
-
-  const app = await createSlowExampleApp(config);
-
-  serve({ fetch: app.fetch, port }, () => {
-    console.log(`[example-server-slow] listening on http://127.0.0.1:${port}`);
-    console.log(
-      `[example-server-slow] paid route: GET /paid/weather?city=... (delays ${SLOW_RESPONSE_MS}ms)`,
-    );
-  });
 }
