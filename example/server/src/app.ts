@@ -19,11 +19,15 @@ export interface MerchantRuntimeConfig {
   apiPriceMicroUsdc: string;
 }
 
+const INDEXER_URL = (
+  process.env.INDEXER_URL?.trim() || DEFAULT_INDEXER_URL
+).replace(/\/$/, "");
+
 export async function fetchMerchantConfig(
   publicOrigin: string,
 ): Promise<MerchantRuntimeConfig> {
   const origin = publicOrigin.replace(/\/$/, "");
-  const url = `${DEFAULT_INDEXER_URL}/api/endpoints/resolve?origin=${encodeURIComponent(origin)}`;
+  const url = `${INDEXER_URL}/api/endpoints/resolve?origin=${encodeURIComponent(origin)}`;
   const res = await fetch(url);
   const raw = await res.text();
   console.log(
@@ -168,20 +172,23 @@ export async function startExampleServer(
 
   const config = await waitForRegistration(publicUrl);
 
+  const priceUsdc = (
+    Number(config.apiPriceMicroUsdc) / 1_000_000
+  ).toFixed(6);
+  const listenUrl = config.origin || publicUrl;
+
   console.log(`[example-server] registered slug: ${config.slug}`);
   console.log(`[example-server] payTo: ${config.payTo} (from dashboard)`);
-  console.log(
-    `[example-server] api price: ${config.apiPriceMicroUsdc} microUSDC`,
-  );
+  console.log(`[example-server] api price: ${priceUsdc} USDC`);
   console.log(`[example-server] facilitator: ${DEFAULT_FACILITATOR_URL}`);
 
   const app = await createExampleApp(config);
 
   serve({ fetch: app.fetch, port }, () => {
-    console.log(`[example-server] listening on http://127.0.0.1:${port}`);
-    console.log(`[example-server] paid route: GET /paid/weather?city=...`);
+    console.log(`[example-server] listening on ${listenUrl}`);
+    console.log(`[example-server] paid route: GET ${listenUrl}/paid/weather?city=...`);
     console.log(
-      `[example-server] test: curl -i http://127.0.0.1:${port}/paid/weather?city=London`,
+      `[example-server] test: curl -i ${listenUrl}/paid/weather?city=London`,
     );
   });
 }
