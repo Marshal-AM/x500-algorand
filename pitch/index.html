@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>x500 — Pitch Deck</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="deck" id="deck">
+      <!-- 1. Introduction -->
+      <section class="slide is-active" data-slide="1" aria-label="Introduction">
+        <div class="slide-bg"></div>
+        <header class="topbar">
+          <img class="brand-logo" src="assets/x500-logo.png" alt="x500" />
+          <img class="algorand-mark" src="assets/algorand-logo.png" alt="Algorand" />
+        </header>
+        <div class="slide-body hero">
+          <p class="eyebrow">Parametric insurance · Algorand testnet</p>
+          <h1 class="hero-title">
+            <img class="hero-wordmark" src="assets/x500-logo.png" alt="x500" />
+          </h1>
+          <p class="hero-sub">
+            Micro-insurance for AI agents that pay APIs with x402.
+          </p>
+          <div class="hero-pills">
+            <span>x402 Exact USDC</span>
+            <span>On-chain escrow</span>
+            <span>Parametric refunds</span>
+          </div>
+        </div>
+        <footer class="slide-foot">
+          <span></span>
+          <span class="hint">→ next</span>
+        </footer>
+      </section>
+
+      <!-- 2. The problem -->
+      <section class="slide" data-slide="2" aria-label="The problem">
+        <div class="slide-bg"></div>
+        <header class="topbar">
+          <img class="brand-logo" src="assets/x500-logo.png" alt="x500" />
+          <span class="slide-label">The problem</span>
+        </header>
+        <div class="slide-body problem">
+          <div class="problem-copy">
+            <h2>Agents pay for APIs.<br />Who refunds a 500?</h2>
+            <ul class="problem-points">
+              <li>Agents pay merchants with <strong>x402</strong></li>
+              <li>Humans call support when services break</li>
+              <li>A 500 after payment leaves the agent stuck</li>
+            </ul>
+          </div>
+          <div class="problem-art" aria-hidden="true">
+            <div class="flow-card pay">
+              <span class="flow-tag">x402</span>
+              <span class="flow-amt">PAID</span>
+              <span class="flow-sub">USDC settled</span>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-card fail">
+              <span class="flow-code">500</span>
+              <span class="flow-sub">Service broken</span>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-card stuck">
+              <div class="agent-face">
+                <span class="eye"></span><span class="eye"></span>
+                <span class="mouth"></span>
+              </div>
+              <span class="flow-sub">Agent stuck<br />No refund path</span>
+            </div>
+          </div>
+        </div>
+        <footer class="slide-foot"><span></span></footer>
+      </section>
+
+      <!-- 3. That's why we built x500 -->
+      <section class="slide" data-slide="3" aria-label="Why x500">
+        <div class="slide-bg glow"></div>
+        <header class="topbar">
+          <img class="brand-logo" src="assets/x500-logo.png" alt="x500" />
+        </header>
+        <div class="slide-body center-stage">
+          <p class="eyebrow">The answer</p>
+          <h2 class="giant">
+            That’s why we built<br />
+            <img class="inline-logo" src="assets/x500-logo.png" alt="x500" />
+          </h2>
+          <p class="lede">
+            Parametric micro-insurance for agent API payments —
+            <em>premium in, refund out when calls fail.</em>
+          </p>
+        </div>
+        <footer class="slide-foot"><span></span></footer>
+      </section>
+
+      <!-- 4. What we do -->
+      <section class="slide" data-slide="4" aria-label="What we do">
+        <div class="slide-bg"></div>
+        <header class="topbar">
+          <img class="brand-logo" src="assets/x500-logo.png" alt="x500" />
+          <span class="slide-label">What we do</span>
+        </header>
+        <div class="slide-body what">
+          <p class="lede tight">
+            Wrap every insured API call: pay the merchant, bill a premium, refund
+            on failure — automatically.
+          </p>
+          <div class="loop" aria-hidden="true">
+            <div class="loop-node">
+              <span class="n">1</span>
+              <strong>Call</strong>
+              <small>Insured proxy</small>
+            </div>
+            <div class="loop-edge"></div>
+            <div class="loop-node">
+              <span class="n">2</span>
+              <strong>Pay</strong>
+              <small>x402 → merchant</small>
+            </div>
+            <div class="loop-edge"></div>
+            <div class="loop-node accent">
+              <span class="n">3</span>
+              <strong>Insure</strong>
+              <small>Premium escrow</small>
+            </div>
+            <div class="loop-edge"></div>
+            <div class="loop-node ok">
+              <span class="n">4</span>
+              <strong>Refund</strong>
+              <small>On 5xx / SLA miss</small>
+            </div>
+          </div>
+        </div>
+        <footer class="slide-foot"><span></span></footer>
+      </section>
+
+      <!-- 5. How it works -->
+      <section class="slide" data-slide="5" aria-label="How it works">
+        <div class="slide-bg"></div>
+        <header class="topbar">
+          <img class="brand-logo" src="assets/x500-logo.png" alt="x500" />
+          <span class="slide-label">How it works</span>
+        </header>
+        <div class="slide-body arch">
+          <p class="lede tight">
+            One path. Algorand settles money. x500 settles risk.
+          </p>
+          <div class="arch-grid">
+            <div class="arch-col">
+              <h3>Agent</h3>
+              <div class="arch-node">
+                <img src="assets/x500-logo.png" alt="" class="node-logo" />
+                <div>
+                  <strong>x500-agent-sdk</strong>
+                  <small>payOnce · escrow · insured fetch</small>
+                </div>
+              </div>
+              <div class="arch-node algorand">
+                <img src="assets/algorand-logo.png" alt="" class="node-logo algorand" />
+                <div>
+                  <strong>X500Pool</strong>
+                  <small>depositEscrow</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="arch-col mid">
+              <h3>x500 network</h3>
+              <div class="arch-node">
+                <strong>Market proxy</strong>
+                <small>Route · classify · bill premium</small>
+              </div>
+              <div class="arch-node">
+                <strong>Facilitator</strong>
+                <small>x402 Exact verify + settle</small>
+              </div>
+              <div class="arch-node algorand">
+                <img src="assets/algorand-logo.png" alt="" class="node-logo algorand" />
+                <div>
+                  <strong>X500Settler</strong>
+                  <small>settleBatch · refunds</small>
+                </div>
+              </div>
+              <div class="arch-node">
+                <strong>Indexer</strong>
+                <small>On-chain sync → API · dashboard</small>
+              </div>
+            </div>
+
+            <div class="arch-col">
+              <h3>Merchant</h3>
+              <div class="arch-node algorand">
+                <img src="assets/algorand-logo.png" alt="" class="node-logo algorand" />
+                <div>
+                  <strong>X500Registry</strong>
+                  <small>registerEndpoint</small>
+                </div>
+              </div>
+              <div class="arch-node">
+                <strong>x402 API</strong>
+                <small>Exact USDC resource server</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="slide-foot"><span></span></footer>
+      </section>
+
+      <!-- 6. Algorand primitives -->
+      <section class="slide" data-slide="6" aria-label="Algorand primitives">
+        <div class="slide-bg"></div>
+        <header class="topbar">
+          <img class="brand-logo" src="assets/x500-logo.png" alt="x500" />
+          <img class="algorand-mark" src="assets/algorand-logo.png" alt="Algorand" />
+        </header>
+        <div class="slide-body primitives">
+          <h2>Built on Algorand primitives</h2>
+          <div class="prim-grid">
+            <article class="prim-card">
+              <div class="prim-head">
+                <img src="assets/algorand-logo.png" alt="" />
+                <h3>x402 Exact USDC</h3>
+              </div>
+              <ul>
+                <li><code>x500-agent-sdk</code> — payOnce (402 → sign → retry)</li>
+                <li><code>facilitator</code> — GoPlausible verify + ASA settle</li>
+                <li><code>example/server</code> — Exact merchant scheme</li>
+              </ul>
+            </article>
+            <article class="prim-card">
+              <div class="prim-head">
+                <img src="assets/algorand-logo.png" alt="" />
+                <h3>Smart contracts</h3>
+              </div>
+              <ul>
+                <li><code>X500Registry</code> — endpoint + SLA + pay-to</li>
+                <li><code>X500Pool</code> — agent escrow premiums</li>
+                <li><code>X500Settler</code> — settleBatch refunds</li>
+              </ul>
+            </article>
+            <article class="prim-card">
+              <div class="prim-head">
+                <img src="assets/algorand-logo.png" alt="" />
+                <h3>algosdk · algod</h3>
+              </div>
+              <ul>
+                <li><code>dashboard</code> — Pera / Defly / Lute registerEndpoint</li>
+                <li><code>sdk</code> — app call depositEscrow</li>
+                <li><code>indexer</code> — algod simulate + box sync</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+        <footer class="slide-foot"><span></span></footer>
+      </section>
+
+      <!-- 7. What we shipped -->
+      <section class="slide" data-slide="7" aria-label="What we shipped">
+        <div class="slide-bg"></div>
+        <header class="topbar">
+          <img class="brand-logo" src="assets/x500-logo.png" alt="x500" />
+          <span class="slide-label">Shipped</span>
+        </header>
+        <div class="slide-body shipped">
+          <a
+            class="ship-card"
+            href="https://www.npmjs.com/package/x500-agent-sdk"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <div class="ship-illus ship-illus-sdk" aria-hidden="true">
+              <img src="assets/npm-logo.png" alt="" class="ship-badge npm" />
+              <img src="assets/x500-logo.png" alt="" class="ship-badge x500" />
+            </div>
+            <h3>x500-agent-sdk</h3>
+            <p>Insured fetch, escrow, payOnce on Algorand.</p>
+            <span class="ship-link">npmjs.com/package/x500-agent-sdk →</span>
+          </a>
+          <a
+            class="ship-card"
+            href="https://dashboard-production-915f.up.railway.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <div class="ship-illus ship-illus-dash" aria-hidden="true">
+              <svg viewBox="0 0 64 40" fill="none">
+                <rect x="2" y="4" width="60" height="32" rx="4" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+                <rect x="6" y="10" width="18" height="8" rx="2" fill="currentColor" opacity="0.35"/>
+                <rect x="28" y="10" width="30" height="3" rx="1" fill="currentColor" opacity="0.45"/>
+                <rect x="28" y="16" width="22" height="3" rx="1" fill="currentColor" opacity="0.25"/>
+                <rect x="6" y="22" width="52" height="2" rx="1" fill="currentColor" opacity="0.2"/>
+                <rect x="6" y="27" width="40" height="2" rx="1" fill="currentColor" opacity="0.15"/>
+              </svg>
+            </div>
+            <h3>Dashboard</h3>
+            <p>Register merchants, track calls, Lora settlements.</p>
+            <span class="ship-link">dashboard-production-915f.up.railway.app →</span>
+          </a>
+          <a
+            class="ship-card"
+            href="https://example-merchant-production.up.railway.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <div class="ship-illus ship-illus-server" aria-hidden="true">
+              <svg viewBox="0 0 64 40" fill="none">
+                <rect x="10" y="6" width="44" height="10" rx="2" stroke="currentColor" stroke-width="1.5" opacity="0.55"/>
+                <circle cx="16" cy="11" r="1.5" fill="currentColor" opacity="0.7"/>
+                <circle cx="22" cy="11" r="1.5" fill="currentColor" opacity="0.45"/>
+                <rect x="10" y="20" width="44" height="10" rx="2" stroke="currentColor" stroke-width="1.5" opacity="0.55"/>
+                <circle cx="16" cy="25" r="1.5" fill="currentColor" class="pulse-dot"/>
+                <text x="32" y="27" text-anchor="middle" fill="currentColor" font-size="6" opacity="0.7" font-family="Space Grotesk, sans-serif">x402</text>
+              </svg>
+            </div>
+            <h3>Example server</h3>
+            <p>Live x402 weather API — paid Exact USDC route.</p>
+            <span class="ship-link">example-merchant-production.up.railway.app →</span>
+          </a>
+          <a
+            class="ship-card"
+            href="https://chat-production-acf6.up.railway.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <div class="ship-illus ship-illus-agent" aria-hidden="true">
+              <svg viewBox="0 0 64 40" fill="none">
+                <rect x="18" y="4" width="28" height="22" rx="5" stroke="currentColor" stroke-width="1.5" opacity="0.55"/>
+                <circle cx="27" cy="14" r="2" fill="currentColor" opacity="0.7"/>
+                <circle cx="37" cy="14" r="2" fill="currentColor" opacity="0.7"/>
+                <path d="M26 21h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.45"/>
+                <path d="M24 30h16M28 30v6M36 30v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+              </svg>
+            </div>
+            <h3>Example agent</h3>
+            <p>An agent that pays + insures every weather call.</p>
+            <span class="ship-link">chat-production-acf6.up.railway.app →</span>
+          </a>
+        </div>
+        <footer class="slide-foot"><span></span></footer>
+      </section>
+
+      <!-- 8. Merchant step 1 -->
+      <section class="slide" data-slide="8" aria-label="Merchant step 1">
+        <div class="slide-bg"></div>
+        <header class="topbar">
+          <img class="brand-logo" src="assets/x500-logo.png" alt="x500" />
+          <span class="slide-label">Merchant · 1 / 3</span>
+        </header>
+        <div class="slide-body howto">
+          <div class="howto-copy">
+            <span class="integ-role">Getting started</span>
+            <h2>Open the dashboard</h2>
+            <p class="howto-line">
+              Go to
+              <a href="https://dashboard-production-915f.up.railway.app/" target="_blank" rel="noopener noreferrer">dashboard-production-915f.up.railway.app</a>
+              — see live endpoints, calls, and pool liquidity.
+            </p>
+          </div>
+          <figure class="ss-frame">
+            <img
+              src="assets/dashboard-ss/step-1.png"
+              alt="x500 dashboard overview"
+            />
+          </figure>
+        </div>
+        <footer class="slide-foot"><span></span></footer>
+      </section>
+
+      <!-- 9. Merchant step 2 -->
+      <section class="slide" data-slide="9" aria-label="Merchant step 2">
+        <div class="slide-bg"></div>
+        <header class="topbar">
+          <img class="brand-logo" src="assets/x500-logo.png" alt="x500" />
+          <span class="slide-label">Merchant · 2 / 3</span>
+        </header>
+        <div class="slide-body howto">
+          <div class="howto-copy">
+            <span class="integ-role">Getting started</span>
+            <h2>Start listing your API</h2>
+            <p class="howto-line">
+              Open <strong>Merchants</strong> and click <strong>Register your API</strong> to begin onboarding.
+            </p>
+          </div>
+          <figure class="ss-frame">
+            <img
+              src="assets/dashboard-ss/step-2.png"
+              alt="Merchants page — get your API listed"
+            />
+          </figure>
+        </div>
+        <footer class="slide-foot"><span></span></footer>
+      </section>
+
+      <!-- 10. Merchant step 3 -->
+      <section class="slide" data-slide="10" aria-label="Merchant step 3">
+        <div class="slide-bg"></div>
+        <header class="topbar">
+          <img class="brand-logo" src="assets/x500-logo.png" alt="x500" />
+          <span class="slide-label">Merchant · 3 / 3</span>
+        </header>
+        <div class="slide-body howto">
+          <div class="howto-copy">
+            <span class="integ-role">Getting started</span>
+            <h2>Review and sign with Pera, Defly, or Lute</h2>
+            <p class="howto-line">
+              Confirm slug, origin, price, and SLA — then publish on Algorand testnet.
+            </p>
+          </div>
+          <figure class="ss-frame">
+            <img
+              src="assets/dashboard-ss/step-3.png"
+              alt="Registration review step in the dashboard"
+            />
+          </figure>
+        </div>
+        <footer class="slide-foot"><span></span></footer>
+      </section>
+
+      <!-- 11. Agent builder -->
+      <section class="slide" data-slide="11" aria-label="Agent builder">
+        <div class="slide-bg"></div>
+        <header class="topbar">
+          <img class="brand-logo" src="assets/x500-logo.png" alt="x500" />
+          <span class="slide-label">Agent builder</span>
+        </header>
+        <div class="slide-body agent-howto">
+          <div class="agent-intro">
+            <span class="integ-role">Quick start</span>
+            <h2>Insure every fetch</h2>
+            <p class="howto-line">
+              Install the SDK, fund escrow once, then call merchants by origin URL — premiums and refunds settle automatically.
+            </p>
+            <div class="install-row">
+              <code class="install-cmd">npm install x500-agent-sdk</code>
+              <span class="install-note">Requires Node.js 18+</span>
+            </div>
+          </div>
+          <div class="code-block agent-code">
+            <div class="code-chrome">
+              <span></span><span></span><span></span>
+              <em>agent.ts</em>
+            </div>
+            <pre><code><span class="kw">import</span> { createX500 } <span class="kw">from</span> <span class="str">"x500-agent-sdk"</span>;
+
+<span class="kw">const</span> x500 = createX500({
+  network: <span class="str">"testnet"</span>,
+  address: process.env.X500_AGENT_ADDRESS!,
+  mnemonic: process.env.ALGORAND_AGENT_MNEMONIC!,
+});
+
+<span class="cmt">// 1. Fund insurance escrow once</span>
+<span class="kw">await</span> x500.setup({ escrowMicroAlgos: <span class="num">3_000_000n</span> });
+
+<span class="cmt">// 2. Call a registered merchant by origin URL</span>
+<span class="kw">const</span> res = <span class="kw">await</span> x500.fetch(
+  <span class="str">"https://your-merchant.example/paid/weather?city=Paris"</span>,
+);
+
+console.log(res.status, <span class="kw">await</span> res.text());
+<span class="kw">await</span> x500.close();</code></pre>
+          </div>
+          <a
+            class="repo-cta"
+            href="https://github.com/Marshal-AM/x500-algorand/tree/main/example/agent"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span>Full example agent on GitHub</span>
+            <span aria-hidden="true">→</span>
+          </a>
+        </div>
+        <footer class="slide-foot"><span></span></footer>
+      </section>
+
+      <!-- 12. Thank you -->
+      <section class="slide" data-slide="12" aria-label="Thank you">
+        <div class="slide-bg glow"></div>
+        <header class="topbar">
+          <img class="brand-logo" src="assets/x500-logo.png" alt="x500" />
+          <img class="algorand-mark" src="assets/algorand-logo.png" alt="Algorand" />
+        </header>
+        <div class="slide-body center-stage thanks">
+          <h2 class="giant">Thank you</h2>
+          <p class="slogan">When agents pay, risk shouldn’t be theirs alone.</p>
+          <img class="thanks-logo" src="assets/x500-logo.png" alt="x500" />
+        </div>
+        <footer class="slide-foot"><span></span></footer>
+      </section>
+    </div>
+
+    <nav class="deck-nav" aria-label="Slide navigation">
+      <button type="button" id="prev" aria-label="Previous slide">←</button>
+      <div class="dots" id="dots"></div>
+      <button type="button" id="next" aria-label="Next slide">→</button>
+    </nav>
+
+    <script>
+      (function () {
+        const slides = [...document.querySelectorAll(".slide")];
+        const dots = document.getElementById("dots");
+        const total = slides.length;
+        let i = 0;
+
+        slides.forEach((slide, idx) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "dot";
+          b.setAttribute("aria-label", "Go to slide " + (idx + 1));
+          b.addEventListener("click", () => go(idx));
+          dots.appendChild(b);
+
+          const foot = slide.querySelector(".slide-foot > span");
+          if (foot) foot.textContent = `${idx + 1} / ${total}`;
+        });
+
+        function go(n) {
+          i = Math.max(0, Math.min(slides.length - 1, n));
+          slides.forEach((s, idx) => s.classList.toggle("is-active", idx === i));
+          [...dots.children].forEach((d, idx) =>
+            d.classList.toggle("is-active", idx === i),
+          );
+        }
+
+        document.getElementById("prev").addEventListener("click", () => go(i - 1));
+        document.getElementById("next").addEventListener("click", () => go(i + 1));
+
+        window.addEventListener("keydown", (e) => {
+          if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") {
+            e.preventDefault();
+            go(i + 1);
+          } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+            e.preventDefault();
+            go(i - 1);
+          } else if (e.key === "Home") go(0);
+          else if (e.key === "End") go(slides.length - 1);
+        });
+
+        let touchX = null;
+        document.addEventListener(
+          "touchstart",
+          (e) => {
+            touchX = e.changedTouches[0].screenX;
+          },
+          { passive: true },
+        );
+        document.addEventListener(
+          "touchend",
+          (e) => {
+            if (touchX == null) return;
+            const dx = e.changedTouches[0].screenX - touchX;
+            if (Math.abs(dx) > 50) go(dx < 0 ? i + 1 : i - 1);
+            touchX = null;
+          },
+          { passive: true },
+        );
+
+        const params = new URLSearchParams(location.search);
+        if (params.get("export") === "1") {
+          document.body.classList.add("export");
+        }
+        const startSlide = Number(params.get("slide") || "1");
+        go(Number.isFinite(startSlide) ? startSlide - 1 : 0);
+      })();
+    </script>
+  </body>
+</html>
