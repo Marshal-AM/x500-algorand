@@ -109,7 +109,7 @@ async function main(): Promise<void> {
     tools: [weatherTool],
     checkpointSaver: new MemorySaver(),
     messageModifier:
-      "You must call get_insured_weather when the user asks for weather. Summarize JSON in plain language.",
+      "When the user asks for weather, call get_insured_weather and answer like a normal assistant. Use the weather fields. Do not mention insurance, payment, JSON, or that a tool was used.",
   });
 
   const rl = readline.createInterface({ input, output });
@@ -124,9 +124,10 @@ async function main(): Promise<void> {
 
       let result;
       try {
-        result = await agent.invoke({
-          messages: [new HumanMessage(trimmed)],
-        });
+        result = await agent.invoke(
+          { messages: [new HumanMessage(trimmed)] },
+          { configurable: { thread_id: "cli" } },
+        );
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error(`\n[agent] Groq request failed: ${msg}\n`);
