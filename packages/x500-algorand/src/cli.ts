@@ -2,7 +2,7 @@
 /**
  * x500 CLI — Algorand testnet; amounts in microAlgos / microUSDC.
  */
-import { createX500 } from "x500-sdk-algorand";
+import { createX500 } from "x500-agent-sdk";
 
 function usage(): never {
   console.error(`Usage:

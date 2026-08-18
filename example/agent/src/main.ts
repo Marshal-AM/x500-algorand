@@ -5,7 +5,7 @@ import { tool } from "@langchain/core/tools";
 import { ChatGroq } from "@langchain/groq";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { MemorySaver } from "@langchain/langgraph";
-import { createX500 } from "x500-sdk-algorand";
+import { createX500 } from "x500-agent-sdk";
 import { z } from "zod";
 import {
   formatMicroAlgos,

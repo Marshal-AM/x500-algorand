@@ -1,4 +1,4 @@
-import { DEFAULT_INDEXER_URL } from "x500-sdk-algorand";
+import { DEFAULT_INDEXER_URL } from "x500-agent-sdk";
 
 function requireEnv(name: string): string {
   const value = process.env[name]?.trim();

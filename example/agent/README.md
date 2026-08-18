@@ -1,4 +1,4 @@
-# Example: LangChain agent + x500-sdk-algorand
+# Example: LangChain agent + x500-agent-sdk
 
 Interactive CLI agent powered by **Groq** (`openai/gpt-oss-120b`) with a tool that fetches insured weather from your registered merchant through the x500 market proxy.
 

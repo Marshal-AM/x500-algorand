@@ -1,72 +1,58 @@
 # x500 examples (Algorand)
 
-End-to-end demo: merchant weather API server + LangChain agent with insured calls on **Algorand testnet**.
+End-to-end demo: merchant weather API + LangChain agent with **x500-agent-sdk** on Algorand testnet.
 
-- Merchant payments: **USDC** via x402 (`facilitator.goplausible.xyz`)
-- Insurance: **ALGO** escrow via `x500-sdk-algorand`
+- Merchant payments: **USDC** via x402 (GoPlausible facilitator)
+- Insurance: **USDC** escrow via `x500-agent-sdk` (ASA `10458941`)
 
-## Quick start
+## One-time setup
 
-### 1. Server + ngrok
+From the monorepo root (with root `.env` configured):
 
 ```bash
+pnpm example:setup
+```
+
+This syncs `example/agent/.env` and `example/server/.env`, registers the local merchant (`pay-default` @ `http://127.0.0.1:8800`), and prints next steps.
+
+**Agent wallet needs:**
+
+- Testnet **USDC** ASA `10458941` opted in (x402 merchant payments + insurance escrow/refunds)
+- Pool escrow: `X500_EXAMPLE_SETUP_ESCROW=1 pnpm example:setup` or `npx x500-algorand approve`
+
+## Run the stack
+
+```bash
+# Terminal 1–3 — platform (root .env)
+pnpm indexer:dev
+pnpm settler:dev
+pnpm proxy:dev
+
+# Terminal 4 — example merchant (local, no ngrok required)
 pnpm example:server
+
+# Terminal 5 — smoke test (no Groq key)
+pnpm example:agent:smoke
+
+# Or interactive LangChain agent (needs GROQ_API_KEY in root .env)
+pnpm example:agent
 ```
 
-Copy the **ngrok URL** from the console.
+Local mode uses `EXAMPLE_LOCAL=1` and `http://127.0.0.1:8800` as the merchant origin.
 
-### 2. Dashboard — register merchant
+For public ngrok URLs, set `NGROK_AUTHTOKEN` in root `.env` and remove `EXAMPLE_LOCAL=1` from `example/server/.env`.
 
-```bash
-pnpm dashboard:dev
+## Packages
+
+Examples install the **published** npm package (not workspace link):
+
+```json
+"x500-agent-sdk": "^0.1.0"
 ```
 
-Open http://localhost:3000/merchants/register — connect **Pera** or **Defly**.
-
-| Field | Value |
-|-------|--------|
-| Slug | any name (internal) |
-| Origin URL | ngrok URL from step 1 |
-| API price | e.g. `0.01` USDC |
-| Contact address | your Algorand wallet (receives API payments) |
-
-Server picks up price + address from the indexer automatically.
-
-### 3. Agent
-
-```bash
-cd example/agent
-cp .env.example .env
-# GROQ_API_KEY, X500_AGENT_ADDRESS, ALGORAND_AGENT_MNEMONIC, X500_MERCHANT_ORIGIN
-pnpm install
-pnpm dev
-```
-
-Ask: **"What's the weather in Paris?"**
-
-You should see:
-- Merchant API charge (x402 USDC → merchant)
-- Insurance premium (ALGO escrow → pool)
-
-### 4. Refund test
-
-1. With server running — agent succeeds; watch `[x500] Premium charged`
-2. Stop the server (`Ctrl+C`)
-3. Ask again — observe `[x500] Refund received` after settlement
-
-## Agent escrow
-
-If calls fail with insufficient escrow:
-
-```bash
-export X500_AGENT_ADDRESS=…
-export ALGORAND_AGENT_MNEMONIC="…"
-npx x500-algorand --network testnet approve
-```
-
-Or `createX500().setup()` in a one-off script.
+See `example/agent/.npmrc` and `example/server/.npmrc` (`link-workspace-packages=false`).
 
 ## Sub-projects
 
 - [`server/README.md`](server/README.md) — x402 weather merchant
-- [`agent/README.md`](agent/README.md) — LangChain + `x500-sdk-algorand`
+- [`agent/README.md`](agent/README.md) — LangChain + `x500-agent-sdk`

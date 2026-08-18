@@ -4,13 +4,13 @@ import { paymentMiddleware } from "@x402/hono";
 import { x402ResourceServer, HTTPFacilitatorClient } from "@x402/core/server";
 import { ExactAvmScheme } from "@x402/avm/exact/server";
 import { ALGORAND_TESTNET_CAIP2, USDC_TESTNET_ASA_ID } from "@x402/avm";
-import ngrok from "@ngrok/ngrok";
 import {
   DEFAULT_FACILITATOR_URL,
   DEFAULT_INDEXER_URL,
   loraTxUrl,
-} from "x500-sdk-algorand";
+} from "x500-agent-sdk";
 import { fetchCityWeather, CityNotFoundError } from "./weather.js";
+import { resolvePublicOrigin } from "./public-origin.js";
 
 export interface MerchantRuntimeConfig {
   origin: string;
@@ -162,15 +162,8 @@ export async function createExampleApp(
 export async function startExampleServer(
   port = Number(process.env.SERVER_PORT ?? 8800),
 ): Promise<void> {
-  const token = process.env.NGROK_AUTHTOKEN?.trim();
-  if (!token) {
-    throw new Error("NGROK_AUTHTOKEN required in example/server/.env");
-  }
+  const publicUrl = await resolvePublicOrigin(port);
 
-  const listener = await ngrok.forward({ addr: port, authtoken: token });
-  const publicUrl = listener.url()!.replace(/\/$/, "");
-
-  console.log(`[ngrok] public url: ${publicUrl}`);
   console.log(`[example-server] loading config from x500 indexer…`);
 
   const config = await waitForRegistration(publicUrl);

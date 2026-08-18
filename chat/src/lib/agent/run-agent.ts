@@ -2,16 +2,16 @@ import { AIMessage, HumanMessage } from "@langchain/core/messages";
 import { tool } from "@langchain/core/tools";
 import { ChatGroq } from "@langchain/groq";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { createX500, type X500Client } from "x500-sdk-algorand";
+import { createX500, type X500Client } from "x500-agent-sdk";
 import { z } from "zod";
 import {
   type ChatMessage,
   type ChatTestMode,
   GROQ_MODEL,
-  MERCHANT_ORIGINS,
+  merchantOriginFor,
 } from "./constants";
 import { createLogSink, type LogSink } from "./log-sink";
-import { formatMicroAlgos, formatMicroUsdc, logPaymentBreakdown } from "./payment-log";
+import { formatMicroUsdc, logPaymentBreakdown } from "./payment-log";
 
 function requireEnv(name: string): string {
   const v = process.env[name]?.trim();
@@ -22,7 +22,7 @@ function requireEnv(name: string): string {
 function attachX500Listeners(x500: X500Client, sink: LogSink) {
   x500.on("refund", (e) => {
     sink.log(
-      `\n[x500] Refund event: ${formatMicroAlgos(e.refundMicroAlgos)} ALGO` +
+      `\n[x500] Refund event: ${formatMicroUsdc(e.refundMicroAlgos)}` +
         (e.callId ? ` (call ${e.callId})` : ""),
     );
   });
@@ -45,7 +45,7 @@ async function openX500Client(
 ): Promise<{ x500: X500Client; merchant: MerchantContext }> {
   const address = requireEnv("X500_AGENT_ADDRESS");
   const mnemonic = requireEnv("ALGORAND_AGENT_MNEMONIC");
-  const merchantOrigin = MERCHANT_ORIGINS[mode];
+  const merchantOrigin = merchantOriginFor(mode);
 
   const x500 = createX500({
     network: "testnet",
@@ -92,7 +92,7 @@ function logBootstrapInfo(
   }
   if (resolved.flatPremiumMicroAlgos) {
     sink.log(
-      `[agent] Insurance premium per call: ${formatMicroAlgos(resolved.flatPremiumMicroAlgos)} ALGO`,
+      `[agent] Insurance premium per call: ${formatMicroUsdc(resolved.flatPremiumMicroAlgos)}`,
     );
   }
   sink.log(`[agent] Insured weather URL: ${merchantWeatherBase}?city=...`);
@@ -178,7 +178,7 @@ export async function getBootstrapLogs(mode: ChatTestMode): Promise<string[]> {
 
   try {
     const balance = await x500.getBalance();
-    sink.log(`[agent] Wallet balance: ${formatMicroAlgos(balance)} ALGO`);
+    sink.log(`[agent] Wallet balance: ${formatMicroUsdc(balance)}`);
     logBootstrapInfo(sink, address, merchant);
     return sink.lines;
   } finally {

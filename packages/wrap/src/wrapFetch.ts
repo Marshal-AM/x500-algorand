@@ -4,7 +4,7 @@ import type { Classifier } from "./classifier.js";
 import type { EventSink } from "./eventSink.js";
 import {
   assertAlgorandTestnet,
-  NATIVE_ALGO_ASSET,
+  USDC_TESTNET_ASA_ID,
   ALGORAND_TESTNET,
   type EndpointConfig,
   type Outcome,
@@ -41,7 +41,10 @@ export interface WrapFetchResult {
 
 export async function wrapFetch(opts: WrapFetchOptions): Promise<WrapFetchResult> {
   const network = opts.network ?? ALGORAND_TESTNET;
-  const asset = opts.asset ?? NATIVE_ALGO_ASSET;
+  const asset: SettlementEvent["asset"] =
+    opts.asset === USDC_TESTNET_ASA_ID || opts.asset === "algo"
+      ? opts.asset
+      : USDC_TESTNET_ASA_ID;
   assertAlgorandTestnet(network);
 
   const fetchImpl = opts.fetchImpl ?? fetch;
@@ -133,6 +136,7 @@ export async function wrapFetch(opts: WrapFetchOptions): Promise<WrapFetchResult
   const classified = opts.classifier.classify({
     response: upstreamResponse,
     latencyMs,
+    requestHeaders: opts.init?.headers,
     endpointConfig: {
       sla_latency_ms: opts.endpointConfig.sla_latency_ms,
       flat_premium_micro_algos: opts.endpointConfig.flat_premium_micro_algos,
@@ -155,7 +159,7 @@ export async function wrapFetch(opts: WrapFetchOptions): Promise<WrapFetchResult
       outcome: classified.outcome,
       ts: new Date(tEnd).toISOString(),
       network: ALGORAND_TESTNET,
-      asset: NATIVE_ALGO_ASSET,
+      asset,
       verdictSource: "x500_observed",
     };
     try {

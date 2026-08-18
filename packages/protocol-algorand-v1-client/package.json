@@ -1,7 +1,7 @@
 {
-  "name": "@x500/protocol-algorand-v1-client",
-  "version": "0.1.0",
-  "private": true,
+  "name": "x500-protocol-algorand-v1-client",
+  "version": "0.1.1",
+  "private": false,
   "type": "module",
   "description": "Algorand protocol ABIs, encoders, indexer reads for x500 V1.",
   "main": "./dist/index.js",
@@ -12,9 +12,18 @@
       "default": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "tsc"
   },
   "dependencies": {
     "algosdk": "^3.0.0"

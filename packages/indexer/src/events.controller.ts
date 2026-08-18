@@ -58,24 +58,33 @@ export class EventsController {
       .maybeSingle();
 
     const hostname = ep.hostname?.trim() || existingEndpoint?.hostname;
-    if (hostname) {
-      await this.db.client.from("endpoints").upsert(
-        {
-          slug: body.endpointSlug,
-          network,
-          hostname,
-          sla_ms: ep.slaMs ?? 0,
-          flat_premium_micro_algos: Number(
-            ep.flatPremiumMicroAlgos ?? premium,
-          ),
-          imputed_cost_micro_algos: Number(ep.imputedCostMicroAlgos ?? 0),
-          percent_bps: ep.percentBps ?? 0,
-          paused: ep.paused ?? false,
-          pool_balance_micro_algos: Number(ep.poolBalanceMicroAlgos ?? 0),
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "slug" },
-      );
+    const hasEndpointEconomics =
+      (ep.slaMs !== undefined && ep.slaMs > 0) ||
+      ep.flatPremiumMicroAlgos !== undefined ||
+      ep.imputedCostMicroAlgos !== undefined ||
+      ep.paused !== undefined;
+
+    if (hostname && hasEndpointEconomics) {
+      const row: Record<string, unknown> = {
+        slug: body.endpointSlug,
+        network,
+        hostname,
+        updated_at: new Date().toISOString(),
+      };
+      if (ep.slaMs !== undefined && ep.slaMs > 0) row.sla_ms = ep.slaMs;
+      if (ep.flatPremiumMicroAlgos !== undefined) {
+        row.flat_premium_micro_algos = Number(ep.flatPremiumMicroAlgos);
+      }
+      if (ep.imputedCostMicroAlgos !== undefined) {
+        const imputed = Number(ep.imputedCostMicroAlgos);
+        if (imputed > 0) row.imputed_cost_micro_algos = imputed;
+      }
+      if (ep.percentBps !== undefined) row.percent_bps = ep.percentBps;
+      if (ep.paused !== undefined) row.paused = ep.paused;
+      if (ep.poolBalanceMicroAlgos !== undefined) {
+        row.pool_balance_micro_algos = Number(ep.poolBalanceMicroAlgos);
+      }
+      await this.db.client.from("endpoints").upsert(row, { onConflict: "slug" });
     } else if (ep.poolBalanceMicroAlgos !== undefined) {
       await this.db.client
         .from("endpoints")

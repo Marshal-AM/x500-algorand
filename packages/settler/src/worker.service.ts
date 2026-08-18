@@ -12,12 +12,12 @@ import {
   type SettleJobRow,
 } from "@x500/db-algorand";
 import { AlgorandAdapter } from "@x500/shared";
-import { NATIVE_ALGO_ASSET, ALGORAND_TESTNET } from "@x500/wrap";
 import { Batcher, BATCH_FLUSH_MS, MAX_BATCH_SIZE, type BatchedJob } from "./batcher.js";
-import { eventFromPayload, pushIndexerEvent } from "./indexer-push.js";
+import { eventFromPayload, pushIndexerEvent, settledIndexerBody } from "./indexer-push.js";
 import { mapOutcomeToSettle } from "./outcome-map.js";
 import { MetricsService } from "./metrics.service.js";
 import { SupabaseService } from "./supabase.service.js";
+import { ALGORAND_TESTNET } from "@x500/wrap";
 
 @Injectable()
 export class WorkerService implements OnModuleInit, OnModuleDestroy {
@@ -129,6 +129,7 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
       latencyMs: ev.latencyMs,
       outcome: mapOutcomeToSettle(ev.outcome),
       wrapOutcome: ev.outcome,
+      asset: ev.asset,
       payload,
     };
   }
@@ -201,7 +202,7 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
         await pushIndexerEvent({
           indexerUrl: this.indexerUrl,
           pushSecret: this.pushSecret,
-          body: {
+          body: settledIndexerBody({
             callId: j.callId,
             agentAddress: j.agentAddress,
             endpointSlug: j.slug,
@@ -210,11 +211,10 @@ export class WorkerService implements OnModuleInit, OnModuleDestroy {
             premiumMicroAlgos: j.premiumMicroAlgos.toString(),
             refundMicroAlgos: j.refundMicroAlgos.toString(),
             breach: j.outcome === "breach",
-            status: "settled",
             settlementTxId: txId,
             network: ALGORAND_TESTNET,
-            asset: NATIVE_ALGO_ASSET,
-          },
+            asset: j.asset,
+          }),
         });
         await completeSettleJob(this.db.client, j.jobId);
         this.metrics.jobsDone += 1;

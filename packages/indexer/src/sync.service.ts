@@ -1,7 +1,6 @@
 import { Inject, Injectable, Logger, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
 import { existsSync } from "node:fs";
-import { join } from "node:path";
-import { AlgorandAdapter } from "@x500/shared";
+import { AlgorandAdapter, resolveDeploymentsPath } from "@x500/shared";
 import { SupabaseService } from "./supabase.service.js";
 
 @Injectable()
@@ -18,13 +17,9 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
       this.log.warn("INDEXER_SYNC_INTERVAL_MS=0 — on-chain sync disabled");
       return;
     }
-    const path = join(
-      process.cwd(),
-      "config",
-      "deployments.algorand.testnet.json",
-    );
+    const path = resolveDeploymentsPath();
     if (!existsSync(path)) {
-      this.log.warn("No deployments.algorand.testnet.json — sync idle");
+      this.log.warn(`No deployments file at ${path} — sync idle`);
       return;
     }
     this.adapter = new AlgorandAdapter({
@@ -51,19 +46,30 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
       const endpoints = await this.adapter.readEndpointConfigs();
       let synced = 0;
       for (const ep of endpoints) {
-        const { error } = await this.db.client.from("endpoints").upsert({
+        const row: Record<string, unknown> = {
           slug: ep.slug,
           network: "algorand:testnet",
           hostname: ep.hostname,
-          sla_ms: ep.slaLatencyMs,
-          flat_premium_micro_algos: Number(ep.flatPremiumMicroAlgos),
-          imputed_cost_micro_algos: Number(ep.imputedCostMicroAlgos),
           api_price_micro_usdc: Number(ep.apiPriceMicroUsdc),
           contact_address: ep.contactAddress,
           paused: ep.paused,
           updated_at: new Date().toISOString(),
-        });
-        if (!error) synced += 1;
+        };
+        if (ep.slaLatencyMs > 0) row.sla_ms = ep.slaLatencyMs;
+        if (ep.flatPremiumMicroAlgos > 0n) {
+          row.flat_premium_micro_algos = Number(ep.flatPremiumMicroAlgos);
+        }
+        if (ep.imputedCostMicroAlgos > 0n) {
+          row.imputed_cost_micro_algos = Number(ep.imputedCostMicroAlgos);
+        }
+        const { error } = await this.db.client.from("endpoints").upsert(row);
+        if (error) {
+          this.log.error(
+            `upsert ${ep.slug} failed: ${error.message} sla=${ep.slaLatencyMs} imputed=${ep.imputedCostMicroAlgos}`,
+          );
+          continue;
+        }
+        synced += 1;
       }
       this.log.log(`synced ${synced} endpoints from chain`);
       return synced;

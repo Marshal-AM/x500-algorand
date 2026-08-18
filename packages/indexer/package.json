@@ -17,7 +17,7 @@
     "@nestjs/platform-express": "^10.4.15",
     "@supabase/supabase-js": "^2.47.10",
     "@x500/db-algorand": "workspace:*",
-    "@x500/protocol-algorand-v1-client": "workspace:*",
+    "x500-protocol-algorand-v1-client": "workspace:*",
     "@x500/shared": "workspace:*",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   type ChatTestMode,
   MERCHANT_ORIGINS,
+  merchantOriginFor,
 } from "@/lib/agent/constants";
 import { getBootstrapLogs } from "@/lib/agent/run-agent";
 
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
 
   try {
     const logs = await getBootstrapLogs(mode);
-    return NextResponse.json({ logs });
+    return NextResponse.json({ logs, merchantOrigin: merchantOriginFor(mode) });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: message }, { status: 500 });

@@ -1,6 +1,6 @@
 {
   "name": "x500-algorand",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "private": false,
   "description": "x500 Algorand CLI — insured API calls and x402 USDC payments on Algorand testnet",
   "type": "module",
@@ -31,7 +31,7 @@
     "prepublishOnly": "tsc"
   },
   "dependencies": {
-    "x500-sdk-algorand": "workspace:*"
+    "x500-agent-sdk": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

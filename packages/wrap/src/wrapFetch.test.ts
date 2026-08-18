@@ -12,8 +12,9 @@ import { wrapFetch } from "./wrapFetch.js";
 const endpointConfig = {
   slug: "dummy",
   sla_latency_ms: 100,
-  flat_premium_micro_algos: 1_000_000n,
-  imputed_cost_micro_algos: 10_000_000n,
+  flat_premium_micro_algos: 10_000n,
+  imputed_cost_micro_algos: 100_000n,
+  api_price_micro_usdc: 5_000n,
 };
 
 describe("computeEconomics", () => {
@@ -35,11 +36,34 @@ describe("computeEconomics", () => {
     const e = computeEconomics({
       outcome: "server_error",
       pool: {
-        flatPremiumMicroAlgos: 1n,
-        imputedCostMicroAlgos: 10n,
+        flatPremiumMicroAlgos: 10_000n,
+        imputedCostMicroAlgos: 100_000n,
       },
     });
-    expect(e.refundMicroAlgos).toBe(11n);
+    expect(e.refundMicroAlgos).toBe(110_000n);
+  });
+
+  it("uses amountPaid on latency_breach (capped by imputed)", () => {
+    const e = computeEconomics({
+      outcome: "latency_breach",
+      pool: {
+        flatPremiumMicroAlgos: 10_000n,
+        imputedCostMicroAlgos: 100_000n,
+      },
+      amountPaid: 5_000n,
+    });
+    expect(e.refundMicroAlgos).toBe(15_000n);
+  });
+
+  it("latency_breach without amountPaid refunds premium only", () => {
+    const e = computeEconomics({
+      outcome: "latency_breach",
+      pool: {
+        flatPremiumMicroAlgos: 10_000n,
+        imputedCostMicroAlgos: 100_000n,
+      },
+    });
+    expect(e.refundMicroAlgos).toBe(10_000n);
   });
 
   it("zero on client_error", () => {
@@ -110,7 +134,7 @@ describe("SupabaseEventSink", () => {
       callId: "call-1",
       agentAddress: "AGENTADDRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       endpointSlug: "dummy",
-      premiumMicroAlgos: "1000000",
+      premiumMicroAlgos: "10000",
       refundMicroAlgos: "0",
       latencyMs: 10,
       outcome: "ok",
@@ -177,7 +201,7 @@ describe("wrapFetch", () => {
     await Promise.resolve();
     expect(sink.events).toHaveLength(1);
     expect(sink.events[0]?.network).toBe("algorand:testnet");
-    expect(sink.events[0]?.asset).toBe("algo");
+    expect(sink.events[0]?.asset).toBe(USDC_TESTNET_ASA_ID);
     expect(sink.events[0]?.outcome).toBe("server_error");
   });
 
@@ -198,9 +222,15 @@ describe("wrapFetch", () => {
     expect(result.response.status).toBe(502);
   });
 
-  it("marks slow 2xx as latency_breach", async () => {
+  it("marks slow 2xx as latency_breach using PAYMENT-SIGNATURE amount", async () => {
     const sink = new MemoryEventSink();
     let t = 0;
+    const paymentSignature = Buffer.from(
+      JSON.stringify({
+        x402Version: 2,
+        accepted: { scheme: "exact", amount: "5000", asset: "10458941" },
+      }),
+    ).toString("base64");
     const result = await wrapFetch({
       endpointSlug: "dummy",
       agentAddress: "AGENTADDRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
@@ -208,6 +238,7 @@ describe("wrapFetch", () => {
       endpointConfig,
       classifier: defaultClassifier,
       sink,
+      init: { headers: { "PAYMENT-SIGNATURE": paymentSignature } },
       now: () => {
         const cur = t;
         t += 200;
@@ -217,6 +248,8 @@ describe("wrapFetch", () => {
     });
     expect(result.outcome).toBe("latency_breach");
     expect(result.latencyMs).toBe(200);
+    expect(result.refundMicroAlgos).toBe(15_000n);
+    expect(result.premiumMicroAlgos).toBe(10_000n);
   });
 
   it("rejects wrong network", async () => {

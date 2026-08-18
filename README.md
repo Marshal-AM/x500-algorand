@@ -17,7 +17,7 @@ When a paid API call fails or breaches SLA after the agent paid, x500 refunds au
 
 | Package | Role |
 |---------|------|
-| [`x500-sdk-algorand`](packages/x500-sdk-algorand) | Agent SDK — insured `fetch`, x402 USDC, ALGO escrow |
+| [`x500-agent-sdk`](packages/x500-agent-sdk) | Agent SDK — insured `fetch`, x402 USDC, ALGO escrow |
 | [`x500-algorand`](packages/x500-algorand) | CLI (`x500-algorand`) for scripts and quick testing |
 
 ---
@@ -36,7 +36,7 @@ pnpm algorand:smoke
 ### Agent (minimal)
 
 ```ts
-import { createX500 } from "x500-sdk-algorand";
+import { createX500 } from "x500-agent-sdk";
 
 const x500 = createX500({
   network: "testnet",
@@ -78,7 +78,7 @@ npx x500-algorand --network testnet https://merchant.example/paid/weather?city=T
 
 ```mermaid
 flowchart LR
-  Agent[x500-sdk-algorand] --> Proxy[Market proxy]
+  Agent[x500-agent-sdk] --> Proxy[Market proxy]
   Proxy --> Merchant[Merchant x402 API]
   Merchant --> Facil[facilitator.goplausible.xyz]
   Proxy --> Wrap[wrapFetch classify economics]
@@ -138,7 +138,7 @@ Deployments: [`config/deployments.algorand.testnet.json`](config/deployments.alg
 ## Examples
 
 - [`example/`](example/) — weather merchant server + LangChain agent
-- [`packages/x500-sdk-algorand/README.md`](packages/x500-sdk-algorand/README.md) — SDK reference
+- [`packages/x500-agent-sdk/README.md`](packages/x500-agent-sdk/README.md) — SDK reference
 - [`packages/x500-algorand/README.md`](packages/x500-algorand/README.md) — CLI reference
 
 ---

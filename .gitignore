@@ -9,3 +9,6 @@ coverage/
 *.tsbuildinfo
 .secrets/
 docs/
+.venv-algokit/
+.algokit_ci_token.txt
+.tools/

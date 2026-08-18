@@ -39,7 +39,7 @@ describe("createX500", () => {
         headers: {
           "content-type": "application/json",
           "x-x500-call-id": "call-1",
-          "x-x500-premium": "1000000",
+          "x-x500-premium": "10000",
           "x-x500-refund": "0",
           "x-x500-outcome": "ok",
           "x-x500-asset": "algo",
@@ -60,7 +60,7 @@ describe("createX500", () => {
 
     const res = await x500.fetch("http://proxy.test/v1/dummy/quote/algo");
     expect(res.ok).toBe(true);
-    expect(billed).toEqual(["1000000"]);
+    expect(billed).toEqual(["10000"]);
     expect(fetchImpl).toHaveBeenCalled();
     await x500.close();
   });

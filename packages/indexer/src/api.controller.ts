@@ -1,7 +1,7 @@
 import { Controller, Get, Inject, Param, Query } from "@nestjs/common";
 import { existsSync } from "node:fs";
-import { join } from "node:path";
-import { loadDeployments } from "@x500/protocol-algorand-v1-client";
+import { loadDeployments } from "x500-protocol-algorand-v1-client";
+import { resolveDeploymentsPath } from "@x500/shared";
 import { SupabaseService } from "./supabase.service.js";
 
 @Controller("api")
@@ -10,11 +10,7 @@ export class ApiController {
 
   @Get("config")
   protocolConfig() {
-    const path = join(
-      process.cwd(),
-      "config",
-      "deployments.algorand.testnet.json",
-    );
+    const path = resolveDeploymentsPath();
     if (!existsSync(path)) {
       return { error: "deployments not configured" };
     }
@@ -61,10 +57,12 @@ export class ApiController {
         "slug, hostname, sla_ms, flat_premium_micro_algos, api_price_micro_usdc, imputed_cost_micro_algos, contact_address, paused",
       )
       .eq("hostname", normalized)
-      .maybeSingle();
+      .order("slug", { ascending: false })
+      .limit(1);
 
     if (error) return { error: error.message };
-    if (!data) {
+    const row = data?.[0];
+    if (!row) {
       return {
         error: `no endpoint registered for origin ${normalized}`,
         origin: normalized,
@@ -77,8 +75,8 @@ export class ApiController {
 
     return {
       origin: normalized,
-      endpoint: data,
-      insuredBaseUrl: `${proxyBase}/v1/${data.slug}/`,
+      endpoint: row,
+      insuredBaseUrl: `${proxyBase}/v1/${row.slug}/`,
     };
   }
 

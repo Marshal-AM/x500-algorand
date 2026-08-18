@@ -11,6 +11,7 @@ export interface BatchedJob {
   latencyMs: number;
   outcome: "ok" | "breach";
   wrapOutcome: string;
+  asset: string;
   payload: Record<string, unknown>;
 }
 

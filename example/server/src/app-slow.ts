@@ -4,19 +4,19 @@ import { paymentMiddleware } from "@x402/hono";
 import { x402ResourceServer, HTTPFacilitatorClient } from "@x402/core/server";
 import { ExactAvmScheme } from "@x402/avm/exact/server";
 import { ALGORAND_TESTNET_CAIP2, USDC_TESTNET_ASA_ID } from "@x402/avm";
-import ngrok from "@ngrok/ngrok";
 import {
   DEFAULT_FACILITATOR_URL,
   loraTxUrl,
-} from "x500-sdk-algorand";
+} from "x500-agent-sdk";
 import {
   type MerchantRuntimeConfig,
   waitForRegistration,
 } from "./app.js";
 import { fetchCityWeather, CityNotFoundError } from "./weather.js";
+import { resolvePublicOrigin } from "./public-origin.js";
 
-/** Artificial delay (ms) before the paid route responds. Default 70s to breach a 60s SLA. */
-const SLOW_RESPONSE_MS = Number(process.env.SLOW_RESPONSE_MS ?? 70_000);
+/** Artificial delay (ms) before the paid route responds. Default 20s (breach 15s SLA demos). */
+const SLOW_RESPONSE_MS = Number(process.env.SLOW_RESPONSE_MS ?? 20_000);
 
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
@@ -55,6 +55,7 @@ export async function createSlowExampleApp(
           network: ALGORAND_TESTNET_CAIP2,
           payTo: config.payTo,
           extra: { asset: Number(USDC_TESTNET_ASA_ID) },
+          maxTimeoutSeconds: 120,
         },
       ],
       description:
@@ -62,7 +63,35 @@ export async function createSlowExampleApp(
     },
   };
 
-  app.use(paymentMiddleware(paymentConfig, x402Server));
+  // @x402/hono verifies, runs next(), THEN settles. A delay inside the
+  // handler sits between verify and settle — facilitator settlement then
+  // fails and the client gets HTTP 402 with body `{}`. Wrap classifies
+  // that as client_error (premium 0, refund 0), so SLA repayment never
+  // runs. Keep the handler fast so settle can complete, then stall the
+  // HTTP response afterward. wrapFetch still observes the full RTT.
+  const x402 = paymentMiddleware(paymentConfig, x402Server);
+  app.use("/paid/*", async (c, next) => {
+    const t0 = Date.now();
+    const paid = Boolean(
+      c.req.header("payment-signature") || c.req.header("x-payment"),
+    );
+    console.log(
+      `[example-server-slow] ${c.req.method} ${c.req.url} paid=${paid}`,
+    );
+    const out = await x402(c, next);
+    const res = out instanceof Response ? out : c.res;
+    const status = res?.status ?? 0;
+    console.log(
+      `[example-server-slow] x402 done status=${status} ${Date.now() - t0}ms payment-response=${res?.headers.get("payment-response")?.slice(0, 80) ?? "none"}`,
+    );
+    if (status > 0 && status < 400) {
+      console.log(
+        `[example-server-slow] stalling ${SLOW_RESPONSE_MS}ms after x402 settle…`,
+      );
+      await sleep(SLOW_RESPONSE_MS);
+    }
+    return out ?? res;
+  });
 
   app.get("/paid/weather", async (c) => {
     const city = c.req.query("city");
@@ -72,11 +101,6 @@ export async function createSlowExampleApp(
         400,
       );
     }
-
-    console.log(
-      `[example-server-slow] stalling ${SLOW_RESPONSE_MS}ms before responding…`,
-    );
-    await sleep(SLOW_RESPONSE_MS);
 
     try {
       const weather = await fetchCityWeather(city);
@@ -109,15 +133,8 @@ export async function createSlowExampleApp(
 export async function startSlowExampleServer(
   port = Number(process.env.SERVER_PORT ?? 8801),
 ): Promise<void> {
-  const token = process.env.NGROK_AUTHTOKEN?.trim();
-  if (!token) {
-    throw new Error("NGROK_AUTHTOKEN required in example/server/.env");
-  }
+  const publicUrl = await resolvePublicOrigin(port);
 
-  const listener = await ngrok.forward({ addr: port, authtoken: token });
-  const publicUrl = listener.url()!.replace(/\/$/, "");
-
-  console.log(`[ngrok] public url: ${publicUrl}`);
   console.log(
     `[example-server-slow] loading config from x500 indexer… (responds after ${SLOW_RESPONSE_MS}ms)`,
   );

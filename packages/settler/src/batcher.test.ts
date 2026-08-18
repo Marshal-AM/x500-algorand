@@ -12,6 +12,7 @@ function job(partial: Partial<BatchedJob> & { jobId: string; slug: string }): Ba
     latencyMs: 1,
     outcome: "ok",
     wrapOutcome: "ok",
+    asset: "10458941",
     payload: {},
     ...partial,
   };

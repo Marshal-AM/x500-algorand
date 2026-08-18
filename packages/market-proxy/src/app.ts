@@ -4,12 +4,13 @@ import { Hono, type Context } from "hono";
 import WebSocket from "ws";
 import { requireAlgorandSupabaseConfig } from "@x500/db-algorand";
 import { AlgorandAdapter } from "@x500/shared";
-import { NATIVE_ALGO_ASSET, ALGORAND_TESTNET } from "@x500/wrap";
-import { TESTNET_DEPLOYMENTS } from "./deployments.js";
+import { USDC_TESTNET_ASA_ID, ALGORAND_TESTNET } from "@x500/wrap";
 import {
   defaultClassifier,
   SupabaseEventSink,
   wrapFetch,
+  pushIndexerEvent,
+  pendingIndexerBody,
   type BalanceCheck,
   type EndpointConfig,
 } from "@x500/wrap";
@@ -57,6 +58,7 @@ function endpointPremiumMicroAlgos(
 function requireBootEnv(): {
   dummyUpstreamFallback: string;
   indexerUrl: string;
+  indexerPushSecret: string | null;
   betaKey: string | null;
   awaitSink: boolean;
 } {
@@ -82,6 +84,7 @@ function requireBootEnv(): {
   return {
     dummyUpstreamFallback,
     indexerUrl,
+    indexerPushSecret: process.env.INDEXER_PUSH_SECRET?.trim() || null,
     betaKey: process.env.MARKET_PROXY_BETA_KEY?.trim() || null,
     awaitSink: process.env.X500_AWAIT_SINK === "1",
   };
@@ -97,7 +100,7 @@ function createSupabase(): SupabaseClient {
 
 function createAdapter(): AlgorandAdapter {
   return new AlgorandAdapter({
-    deployments: TESTNET_DEPLOYMENTS,
+    deploymentsPath: process.env.X500_DEPLOYMENTS_PATH?.trim(),
     settlerMnemonic: process.env.ALGORAND_SETTLER_MNEMONIC?.trim(),
   });
 }
@@ -187,7 +190,7 @@ export function createMarketProxyApp(opts?: {
       imputedCostMicroAlgos: String(row.imputed_cost_micro_algos),
       apiPriceMicroUsdc: String(row.api_price_micro_usdc ?? 5000),
       paused: row.paused,
-      asset: NATIVE_ALGO_ASSET,
+      asset: USDC_TESTNET_ASA_ID,
       network: ALGORAND_TESTNET,
     }));
     return c.json({ cacheTtlSec: 60, endpoints });
@@ -224,8 +227,9 @@ export function createMarketProxyApp(opts?: {
   app.all("/v1/:slug/*", async (c) => {
     const slug = c.req.param("slug");
 
-    const chainEp = await adapter.getEndpoint(slug);
-    if (!chainEp) {
+    const chainEp = await adapter.getEndpoint(slug).catch(() => null);
+    const dbOnly = process.env.X500_PROXY_DB_ONLY === "1";
+    if (!chainEp && !dbOnly) {
       return c.json(
         {
           error: "unknown_slug",
@@ -235,16 +239,18 @@ export function createMarketProxyApp(opts?: {
         404,
       );
     }
-    if (chainEp.paused) {
+    if (chainEp?.paused) {
       return c.json({ error: "endpoint_paused", slug }, 503);
     }
 
     let protocolPaused = false;
-    try {
-      protocolPaused = await adapter.getProtocolPaused();
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      return c.json({ error: "protocol_state_unavailable", message: msg }, 503);
+    if (chainEp) {
+      try {
+        protocolPaused = await adapter.getProtocolPaused();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return c.json({ error: "protocol_state_unavailable", message: msg }, 503);
+      }
     }
     if (protocolPaused) {
       return c.json({ error: "protocol_paused" }, 503);
@@ -290,16 +296,25 @@ export function createMarketProxyApp(opts?: {
       : "";
     const upstreamUrl = `${origin.base}/${rest}${qs}`;
 
+    const slaFromChain = chainEp?.slaLatencyMs ?? 0;
     const endpointConfig: EndpointConfig = {
       slug,
-      sla_latency_ms: dbEp.sla_ms > 0 ? dbEp.sla_ms : chainEp.slaLatencyMs,
+      sla_latency_ms:
+        dbEp.sla_ms > 0
+          ? dbEp.sla_ms
+          : slaFromChain > 0
+            ? slaFromChain
+            : 60_000,
       flat_premium_micro_algos: endpointPremiumMicroAlgos(
         dbEp.flat_premium_micro_algos,
-        chainEp.flatPremiumMicroAlgos,
+        chainEp?.flatPremiumMicroAlgos ?? 0n,
       ),
       imputed_cost_micro_algos: endpointPremiumMicroAlgos(
         dbEp.imputed_cost_micro_algos,
-        chainEp.imputedCostMicroAlgos,
+        chainEp?.imputedCostMicroAlgos ?? 0n,
+      ),
+      api_price_micro_usdc: BigInt(
+        dbEp.api_price_micro_usdc ?? chainEp?.apiPriceMicroUsdc ?? 5000,
       ),
     };
 
@@ -343,11 +358,42 @@ export function createMarketProxyApp(opts?: {
       balanceCheck,
       endpointConfig,
       network: ALGORAND_TESTNET,
-      asset: NATIVE_ALGO_ASSET,
+      asset: USDC_TESTNET_ASA_ID,
       pool: "x500-pool",
       skipZeroPremium: true,
       awaitSink: boot.awaitSink,
     });
+    if (result.response.status >= 400) {
+      console.warn(
+        `[market-proxy] slug=${slug} upstream=${upstreamUrl} status=${result.response.status} outcome=${result.outcome} latencyMs=${result.latencyMs} premium=${result.premiumMicroAlgos} refund=${result.refundMicroAlgos}`,
+      );
+    }
+
+    if (
+      boot.indexerPushSecret &&
+      (result.premiumMicroAlgos > 0n || result.refundMicroAlgos > 0n)
+    ) {
+      const body = pendingIndexerBody({
+        callId: result.callId,
+        agentAddress,
+        endpointSlug: slug,
+        outcome: result.outcome,
+        latencyMs: result.latencyMs,
+        premiumMicroAlgos: result.premiumMicroAlgos,
+        refundMicroAlgos: result.refundMicroAlgos,
+        asset: USDC_TESTNET_ASA_ID,
+      });
+      void pushIndexerEvent({
+        indexerUrl: boot.indexerUrl,
+        pushSecret: boot.indexerPushSecret,
+        body,
+      }).catch((err) => {
+        console.error(
+          "[market-proxy] pending indexer push failed",
+          err instanceof Error ? err.message : err,
+        );
+      });
+    }
 
     return result.response;
   });

@@ -16,10 +16,12 @@ export const NATIVE_ALGO_ASSET = "algo" as const;
 export interface EndpointConfig {
   slug: string;
   sla_latency_ms: number;
-  /** Flat premium per covered call, in microAlgos. */
+  /** Flat insurance premium per covered call (microUSDC in pool escrow). */
   flat_premium_micro_algos: bigint;
-  /** Per-call parametric refund principal ceiling, in microAlgos. */
+  /** Refund principal ceiling (microUSDC). */
   imputed_cost_micro_algos: bigint;
+  /** Registered merchant x402 API price (microUSDC). */
+  api_price_micro_usdc: bigint;
 }
 
 /**

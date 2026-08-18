@@ -3,7 +3,7 @@
  *
  * Requires: ALGORAND_AGENT_MNEMONIC, X500_AGENT_ADDRESS, merchant URL in env or arg.
  */
-import { createX500, loraTxUrl } from "x500-sdk-algorand";
+import { createX500, loraTxUrl } from "x500-agent-sdk";
 
 async function main(): Promise<void> {
   const mnemonic = process.env.ALGORAND_AGENT_MNEMONIC?.trim();

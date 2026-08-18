@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "tsx --env-file=.env src/main.ts",
-    "start": "tsx --env-file=.env src/main.ts"
+    "start": "tsx --env-file=.env src/main.ts",
+    "smoke": "tsx --env-file=.env src/smoke.ts"
   },
   "dependencies": {
     "@langchain/core": "^0.3.42",
     "@langchain/groq": "^0.2.2",
     "@langchain/langgraph": "^0.2.74",
-    "x500-sdk-algorand": "workspace:*",
+    "x500-agent-sdk": "^0.1.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

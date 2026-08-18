@@ -4,7 +4,7 @@ import {
   encodeSetEndpointSla,
   encodeSlug,
   encodeUpdateEndpoint,
-} from "@x500/protocol-algorand-v1-client";
+} from "x500-protocol-algorand-v1-client";
 import { indexerBase } from "@/lib/indexer";
 
 export interface WalletSession {

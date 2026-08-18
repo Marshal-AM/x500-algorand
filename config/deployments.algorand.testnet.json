@@ -1,17 +1,17 @@
 {
   "network": "algorand:testnet",
-  "deployedAt": "2026-08-17T00:00:00.000Z",
-  "authorityAddress": "PLACEHOLDER_AUTHORITY",
+  "deployedAt": "2026-08-18T05:50:59.461Z",
+  "authorityAddress": "TRJXF5EDMGG3F3XU24LLS5ROYMBSYASM6SXHFE7WLH7HDKZ72HTIAB2ZLE",
   "registry": {
-    "appId": 0,
-    "address": "PLACEHOLDER_REGISTRY"
+    "appId": 769438875,
+    "address": "EBPIRPHIUBACGZBGAY7CYJRI6MNQSGGJDRAKDJLRDCZGSYKFA5YEDNZD4Q"
   },
   "pool": {
-    "appId": 0,
-    "address": "PLACEHOLDER_POOL"
+    "appId": 769443375,
+    "address": "A5P2L3XDNWCJC6XIK3TGBLBTPBTZRBVNRLDZXVYX7PGV4K6NHSSM2KU7MI"
   },
   "settler": {
-    "appId": 0,
-    "address": "PLACEHOLDER_SETTLER"
+    "appId": 769443376,
+    "address": "NFS5ZQRMO5GD2C64WJP5OZUKA3YJ74UY54SZNCJ74GYU3D4X6QPYTDHFDE"
   }
 }

@@ -6,14 +6,17 @@
   "scripts": {
     "build": "node scripts/compile.mjs",
     "compile": "node scripts/compile.mjs",
-    "test": "node --test test/stub.test.js"
+    "test": "node --test test/abi-roundtrip.test.js"
   },
   "dependencies": {
     "@algorandfoundation/algokit-utils": "^7.0.0",
     "algosdk": "^3.0.0"
   },
   "devDependencies": {
+    "@algorandfoundation/algorand-typescript": "^1.1.0",
+    "@algorandfoundation/puya-ts": "^1.1.0",
     "@types/node": "^22.10.0",
+    "x500-protocol-algorand-v1-client": "workspace:*",
     "typescript": "^5.7.3"
   }
 }

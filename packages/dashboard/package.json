@@ -14,7 +14,7 @@
     "@fontsource-variable/instrument-sans": "^5.2.8",
     "@fontsource-variable/space-grotesk": "^5.2.10",
     "@txnlab/use-wallet-react": "^4.0.0",
-    "@x500/protocol-algorand-v1-client": "workspace:*",
+    "x500-protocol-algorand-v1-client": "workspace:*",
     "algosdk": "^3.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

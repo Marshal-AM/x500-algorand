@@ -1,5 +1,5 @@
 {
-  "name": "x500-sdk-algorand",
+  "name": "x500-agent-sdk",
   "version": "0.1.0",
   "private": false,
   "description": "x500 Algorand agent SDK — insured fetch + x402 USDC payments on Algorand testnet",
@@ -30,10 +30,9 @@
     "prepublishOnly": "tsc && node -e \"const fs=require('fs');for (const f of fs.readdirSync('dist')) if (f.includes('.test.')) fs.unlinkSync('dist/'+f)\""
   },
   "dependencies": {
-    "@x402-avm/avm": "^2.6.1",
-    "@x402-avm/core": "^2.6.1",
-    "@x402-avm/fetch": "^2.6.1",
-    "@x500/protocol-algorand-v1-client": "workspace:*",
+    "@x402/avm": "2.12.0",
+    "@x402/core": "2.12.0",
+    "x500-protocol-algorand-v1-client": "workspace:*",
     "algosdk": "^3.0.0"
   },
   "devDependencies": {

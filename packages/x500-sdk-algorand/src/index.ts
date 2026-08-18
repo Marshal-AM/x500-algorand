@@ -25,4 +25,4 @@ export {
   type ResolvedMerchant,
 } from "./resolveMerchant.js";
 
-export const PACKAGE_NAME = "x500-sdk-algorand" as const;
+export const PACKAGE_NAME = "x500-agent-sdk" as const;

@@ -1,5 +1,6 @@
 import { classifyHttpOutcome } from "@x500/classifier";
 import { computeEconomics } from "./economics.js";
+import { parseX402PaymentAmountMicro } from "./x402PaymentAmount.js";
 import type { Outcome } from "./types.js";
 
 export interface ClassifierInput {
@@ -10,6 +11,8 @@ export interface ClassifierInput {
     flat_premium_micro_algos: bigint;
     imputed_cost_micro_algos: bigint;
   };
+  /** Outbound request headers (PAYMENT-SIGNATURE carries the Exact amount). */
+  requestHeaders?: RequestInit["headers"];
 }
 
 export interface ClassifierResult {
@@ -23,7 +26,12 @@ export interface Classifier {
 }
 
 export const defaultClassifier: Classifier = {
-  classify({ response, latencyMs, endpointConfig }: ClassifierInput): ClassifierResult {
+  classify({
+    response,
+    latencyMs,
+    endpointConfig,
+    requestHeaders,
+  }: ClassifierInput): ClassifierResult {
     const category = classifyHttpOutcome({
       statusCode: response === null ? null : response.status,
       latencyMs,
@@ -54,12 +62,15 @@ export const defaultClassifier: Classifier = {
         break;
     }
 
+    const amountPaid = parseX402PaymentAmountMicro(response, requestHeaders);
+
     const econ = computeEconomics({
       outcome,
       pool: {
         flatPremiumMicroAlgos: endpointConfig.flat_premium_micro_algos,
         imputedCostMicroAlgos: endpointConfig.imputed_cost_micro_algos,
       },
+      amountPaid,
     });
     return {
       outcome: econ.outcome,

@@ -20,11 +20,18 @@ export function isCoveredBreach(outcome: Outcome): boolean {
   );
 }
 
+function clampPrincipal(requested: bigint, imputedCap: bigint): bigint {
+  if (requested < 0n) return 0n;
+  if (requested > imputedCap) return imputedCap;
+  return requested;
+}
+
 /**
- * Premium + refund for a classified outcome (microAlgos).
+ * Premium + refund for a classified outcome (microUSDC).
  *
- * Covered breach refund = principal + flatPremium, with principal =
- * amountPaid (if provided) else imputedCost, clamped to imputedCost.
+ * - latency_breach: principal is the Exact x402 amount paid (required).
+ * - server_error / network_error: principal is imputed cost (no x402 ticket).
+ * Refund = principal + flatPremium. Imputed cap still clamps principal.
  */
 export function computeEconomics(args: {
   outcome: Outcome;
@@ -43,15 +50,14 @@ export function computeEconomics(args: {
   }
 
   let refund = 0n;
-  if (isCoveredBreach(outcome)) {
-    const requested =
-      amountPaid === undefined ? pool.imputedCostMicroAlgos : amountPaid;
-    const principal =
-      requested < 0n
-        ? 0n
-        : requested > pool.imputedCostMicroAlgos
-          ? pool.imputedCostMicroAlgos
-          : requested;
+  if (outcome === "latency_breach") {
+    const principal = clampPrincipal(amountPaid ?? 0n, pool.imputedCostMicroAlgos);
+    refund = principal + pool.flatPremiumMicroAlgos;
+  } else if (outcome === "server_error" || outcome === "network_error") {
+    const principal = clampPrincipal(
+      pool.imputedCostMicroAlgos,
+      pool.imputedCostMicroAlgos,
+    );
     refund = principal + pool.flatPremiumMicroAlgos;
   }
 

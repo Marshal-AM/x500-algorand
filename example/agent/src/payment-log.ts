@@ -1,5 +1,5 @@
-import type { X500Client } from "x500-sdk-algorand";
-import { loraTxUrl } from "x500-sdk-algorand";
+import type { X500Client } from "x500-agent-sdk";
+import { loraTxUrl } from "x500-agent-sdk";
 
 export function formatMicroAlgos(
   micro: bigint | string | null | undefined,
@@ -67,9 +67,9 @@ export async function logPaymentBreakdown(opts: {
   console.log(`Call ID: ${callId ?? "n/a"}`);
   console.log(`Outcome: ${outcome}`);
   console.log(`HTTP status: ${res.status}`);
-  console.log(`Insurance premium: ${formatMicroAlgos(premium)} ALGO`);
+  console.log(`Insurance premium: ${formatMicroUsdc(premium)}`);
   if (BigInt(refund) > 0n) {
-    console.log(`Refund: ${formatMicroAlgos(refund)} ALGO`);
+    console.log(`Refund: ${formatMicroUsdc(refund)}`);
   }
   if (insuranceTx) {
     console.log(`Insurance settlement: ${loraTxUrl(insuranceTx)}`);

@@ -1,14 +1,15 @@
 import algosdk from "algosdk";
-import { x402Client, wrapFetchWithPayment } from "@x402-avm/fetch";
-import { ALGORAND_TESTNET_CAIP2 } from "@x402-avm/avm";
-import type { ClientAvmSigner } from "@x402-avm/avm";
-import { ExactAvmScheme } from "@x402-avm/avm/exact/client";
-import { encodeDepositEscrow } from "@x500/protocol-algorand-v1-client";
+import { x402Client } from "@x402/core/client";
+import { ALGORAND_TESTNET_CAIP2 } from "@x402/avm";
+import type { ClientAvmSigner } from "@x402/avm";
+import { ExactAvmScheme } from "@x402/avm/exact/client";
+import { wrapFetchWithPayment } from "./wrapFetchWithPayment.js";
+import { encodeDepositEscrow, indexerUsdcBalanceMicro } from "x500-protocol-algorand-v1-client";
 import {
   DEFAULT_FACILITATOR_URL,
   DEFAULT_INDEXER_URL,
   DEFAULT_MARKET_PROXY_URL,
-  DEFAULT_POOL_APP_ID,
+  resolveDefaultPoolAppId,
   insuredProxyUrl,
   loraTxUrl,
 } from "./defaults.js";
@@ -74,7 +75,7 @@ export interface X500Client {
 function requireTestnet(network: string): void {
   if (network !== "testnet") {
     throw new Error(
-      `x500-sdk-algorand V1 supports network "testnet" only (got ${JSON.stringify(network)})`,
+      `x500-agent-sdk V1 supports network "testnet" only (got ${JSON.stringify(network)})`,
     );
   }
 }
@@ -83,7 +84,7 @@ function resolvePoolAppId(opts: CreateX500Options): number {
   if (opts.poolAppId != null && opts.poolAppId > 0) return opts.poolAppId;
   const env = process.env.X500_POOL_APP_ID?.trim();
   if (env) return Number(env);
-  return DEFAULT_POOL_APP_ID;
+  return resolveDefaultPoolAppId();
 }
 
 function accountAddress(account: algosdk.Account): string {
@@ -100,6 +101,11 @@ function createAvmSigner(account: algosdk.Account): ClientAvmSigner {
       });
     },
   };
+}
+
+function poolEscrowBoxName(agentAddress: string): Uint8Array {
+  const pk = algosdk.decodeAddress(agentAddress).publicKey;
+  return Uint8Array.from([...Buffer.from("e"), ...pk]);
 }
 
 export function createX500(opts: CreateX500Options): X500Client {
@@ -201,11 +207,14 @@ export function createX500(opts: CreateX500Options): X500Client {
       throw new Error("pool app id not configured — deploy protocol first");
     }
 
+    const usdcAsaId = Number(USDC_TESTNET_ASA_ID);
     const algod = new algosdk.Algodv2("", algodUrl, "");
     const suggestedParams = await algod.getTransactionParams().do();
-    const payTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+    const poolAddr = algosdk.getApplicationAddress(poolAppId);
+    const axferTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       sender: account.addr,
-      receiver: algosdk.getApplicationAddress(poolAppId),
+      receiver: poolAddr,
+      assetIndex: usdcAsaId,
       amount: microAlgos,
       suggestedParams,
     });
@@ -213,10 +222,16 @@ export function createX500(opts: CreateX500Options): X500Client {
       sender: account.addr,
       appIndex: poolAppId,
       onComplete: algosdk.OnApplicationComplete.NoOpOC,
-      appArgs: [encodeDepositEscrow()],
+      appArgs: encodeDepositEscrow(),
+      boxes: [
+        {
+          appIndex: poolAppId,
+          name: poolEscrowBoxName(address),
+        },
+      ],
       suggestedParams,
     });
-    const txnGroup = algosdk.assignGroupID([payTxn, appCallTxn]);
+    const txnGroup = algosdk.assignGroupID([axferTxn, appCallTxn]);
     const signed = txnGroup.map((txn) => txn.signTxn(account.sk));
     const { txid } = await algod.sendRawTransaction(signed).do();
     await algosdk.waitForConfirmation(algod, txid, 4);
@@ -319,9 +334,7 @@ export function createX500(opts: CreateX500Options): X500Client {
     },
 
     async getBalance() {
-      const algod = new algosdk.Algodv2("", algodUrl, "");
-      const info = await algod.accountInformation(address).do();
-      return BigInt(info.amount);
+      return indexerUsdcBalanceMicro(address, { fetchImpl });
     },
 
     async close() {

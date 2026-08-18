@@ -1,8 +1,8 @@
-# x500-sdk-algorand
+# x500-agent-sdk
 
 **Parametric micro-insurance for AI agent API payments on Algorand testnet.**
 
-`x500-sdk-algorand` wraps `fetch` so agents can call merchant APIs through the x500 insured gateway: pay the merchant via **x402 USDC** (GoPlausible facilitator), pay a flat insurance premium from **ALGO escrow**, and receive parametric refunds when calls fail or breach SLA.
+`x500-agent-sdk` wraps `fetch` so agents can call merchant APIs through the x500 insured gateway: pay the merchant via **x402 USDC** (GoPlausible facilitator), pay a flat insurance premium from **ALGO escrow**, and receive parametric refunds when calls fail or breach SLA.
 
 **V1 scope:** Algorand testnet only · USDC merchant payments · ALGO insurance escrow · no mainnet.
 
@@ -11,7 +11,7 @@
 ## Install
 
 ```bash
-npm install x500-sdk-algorand
+npm install x500-agent-sdk
 ```
 
 Requires **Node.js 18+** (native `fetch`).
@@ -21,7 +21,7 @@ Requires **Node.js 18+** (native `fetch`).
 ## Quick start
 
 ```ts
-import { createX500 } from "x500-sdk-algorand";
+import { createX500 } from "x500-agent-sdk";
 
 const x500 = createX500({
   network: "testnet",
@@ -196,7 +196,7 @@ import {
   DEFAULT_MARKET_PROXY_URL,
   DEFAULT_INDEXER_URL,
   DEFAULT_FACILITATOR_URL,
-} from "x500-sdk-algorand";
+} from "x500-agent-sdk";
 ```
 
 ---

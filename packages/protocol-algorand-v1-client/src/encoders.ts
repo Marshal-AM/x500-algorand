@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { ABIContract, ABIType, ABIUintType } from "algosdk";
 
-export const PACKAGE_NAME = "@x500/protocol-algorand-v1-client" as const;
+export const PACKAGE_NAME = "x500-protocol-algorand-v1-client" as const;
 export const ALGORAND_TESTNET = "algorand:testnet" as const;
 
 export const SETTLER_ROLE = BigInt(
@@ -17,6 +17,13 @@ export function encodeSlug(slug: string): Uint8Array {
   const buf = Buffer.alloc(16, 0);
   Buffer.from(slug, "utf8").copy(buf);
   return buf;
+}
+
+/** Box name for registry slugAt(uint64) map (key prefix `idx`). */
+export function encodeSlugIndexBox(index: number): Uint8Array {
+  const buf = Buffer.alloc(8, 0);
+  buf.writeBigUInt64BE(BigInt(index), 0);
+  return Uint8Array.from([...Buffer.from("idx"), ...buf]);
 }
 
 /** UUID or hex string → bytes16 (first 16 bytes). */
@@ -90,7 +97,7 @@ function registryAbi(): ABIContract {
       {
         name: "register_endpoint",
         args: [
-          { type: "byte[16]", name: "slug" },
+          { type: "uint8[16]", name: "slug" },
           { type: "string", name: "hostname" },
           { type: "uint64", name: "api_price_micro_usdc" },
           { type: "address", name: "contact_address" },
@@ -100,7 +107,7 @@ function registryAbi(): ABIContract {
       },
       {
         name: "get_endpoint",
-        args: [{ type: "byte[16]", name: "slug" }],
+        args: [{ type: "uint8[16]", name: "slug" }],
         returns: {
           type: "(bool,bool,address,uint64,uint16,uint32,uint64,uint64,uint8,string,address)",
         },
@@ -113,7 +120,7 @@ function registryAbi(): ABIContract {
       {
         name: "slug_at",
         args: [{ type: "uint64", name: "index" }],
-        returns: { type: "byte[16]" },
+        returns: { type: "uint8[16]" },
       },
       {
         name: "protocol_paused",
@@ -123,7 +130,7 @@ function registryAbi(): ABIContract {
       {
         name: "set_endpoint_sla",
         args: [
-          { type: "byte[16]", name: "slug" },
+          { type: "uint8[16]", name: "slug" },
           { type: "uint32", name: "sla_latency_ms" },
         ],
         returns: { type: "void" },
@@ -131,7 +138,7 @@ function registryAbi(): ABIContract {
       {
         name: "update_endpoint",
         args: [
-          { type: "byte[16]", name: "slug" },
+          { type: "uint8[16]", name: "slug" },
           { type: "string", name: "hostname" },
           { type: "uint64", name: "api_price_micro_usdc" },
           { type: "address", name: "contact_address" },
@@ -142,13 +149,143 @@ function registryAbi(): ABIContract {
   });
 }
 
+function settlerAbi(): ABIContract {
+  return new ABIContract({
+    name: "X500Settler",
+    methods: [
+      {
+        name: "settle_batch",
+        args: [
+          {
+            type: "(uint8[16],address,uint8[16],uint64,uint64,uint32,bool,uint8,uint64)[]",
+            name: "calls",
+          },
+        ],
+        returns: { type: "void" },
+      },
+      {
+        name: "is_settled",
+        args: [{ type: "uint8[16]", name: "call_id" }],
+        returns: { type: "bool" },
+      },
+    ],
+  });
+}
+
+/** PuYa ARC-4 apps expect selector + each arg as separate application args. */
+function encodeMethodArgs(
+  methodName: string,
+  abi: ABIContract,
+  values: unknown[],
+): Uint8Array[] {
+  const method = abi.getMethodByName(methodName);
+  const appArgs: Uint8Array[] = [Uint8Array.from(method.getSelector())];
+  const args = method.args;
+  for (let i = 0; i < values.length; i++) {
+    const argType = args[i]?.type;
+    if (!argType || typeof argType === "string") {
+      throw new Error(`unsupported ABI arg type at index ${i}`);
+    }
+    const encoded = (argType as ABIType).encode(values[i] as never);
+    appArgs.push(Uint8Array.from(encoded));
+  }
+  return appArgs;
+}
+
+function encodeMethodSelector(methodName: string, abi: ABIContract): Uint8Array[] {
+  return [Uint8Array.from(abi.getMethodByName(methodName).getSelector())];
+}
+
+export function encodeRegisterEndpoint(params: {
+  slug: string;
+  hostname: string;
+  apiPriceMicroUsdc: bigint;
+  contactAddress: string;
+  slaLatencyMs?: number;
+}): Uint8Array[] {
+  return encodeMethodArgs("register_endpoint", registryAbi(), [
+    encodeSlug(params.slug),
+    params.hostname,
+    params.apiPriceMicroUsdc,
+    params.contactAddress,
+    params.slaLatencyMs ?? 0,
+  ]);
+}
+
+export function encodeGetEndpoint(slug: string): Uint8Array[] {
+  return encodeMethodArgs("get_endpoint", registryAbi(), [encodeSlug(slug)]);
+}
+
+export function encodeSlugCount(): Uint8Array[] {
+  return encodeMethodSelector("slug_count", registryAbi());
+}
+
+export function encodeSlugAt(index: number): Uint8Array[] {
+  return encodeMethodArgs("slug_at", registryAbi(), [index]);
+}
+
+export function encodeProtocolPaused(): Uint8Array[] {
+  return encodeMethodSelector("protocol_paused", registryAbi());
+}
+
+export function encodeIsSettled(callId: string): Uint8Array[] {
+  return encodeMethodArgs("is_settled", settlerAbi(), [encodeCallId(callId)]);
+}
+
+export function encodeDepositEscrow(): Uint8Array[] {
+  return encodeMethodSelector("deposit_escrow", poolAbi());
+}
+
+export function encodeEscrowOf(agentAddress: string): Uint8Array[] {
+  return encodeMethodArgs("escrow_of", poolAbi(), [agentAddress]);
+}
+
+export function encodeOptInUsdc(): Uint8Array[] {
+  return encodeMethodSelector("opt_in_usdc", poolAbi());
+}
+
+export function encodeTopUp(slug: string): Uint8Array[] {
+  return encodeMethodArgs("top_up", poolAbi(), [encodeSlug(slug)]);
+}
+
+export function encodeSetEndpointSla(slug: string, slaLatencyMs: number): Uint8Array[] {
+  return encodeMethodArgs("set_endpoint_sla", registryAbi(), [
+    encodeSlug(slug),
+    slaLatencyMs,
+  ]);
+}
+
+export function encodeUpdateEndpoint(params: {
+  slug: string;
+  hostname: string;
+  apiPriceMicroUsdc: bigint;
+  contactAddress: string;
+}): Uint8Array[] {
+  return encodeMethodArgs("update_endpoint", registryAbi(), [
+    encodeSlug(params.slug),
+    params.hostname,
+    params.apiPriceMicroUsdc,
+    params.contactAddress,
+  ]);
+}
+
 function poolAbi(): ABIContract {
   return new ABIContract({
     name: "X500Pool",
     methods: [
       {
+        name: "init",
+        args: [{ type: "uint64", name: "settler_app_id" }],
+        returns: { type: "void" },
+      },
+      {
+        name: "opt_in_usdc",
+        args: [],
+        returns: { type: "void" },
+      },
+      {
         name: "top_up",
-        args: [{ type: "byte[16]", name: "slug" }],
+        args: [{ type: "uint8[16]", name: "slug" }],
         returns: { type: "void" },
       },
       {
@@ -163,133 +300,55 @@ function poolAbi(): ABIContract {
       },
       {
         name: "balance_of",
-        args: [{ type: "byte[16]", name: "slug" }],
+        args: [{ type: "uint8[16]", name: "slug" }],
         returns: { type: "(uint64,uint64)" },
       },
     ],
   });
 }
 
-function settlerAbi(): ABIContract {
+function settlerInitAbi(): ABIContract {
   return new ABIContract({
     name: "X500Settler",
     methods: [
       {
-        name: "settle_batch",
+        name: "init",
         args: [
-          {
-            type: "(byte[16],address,byte[16],uint64,uint64,uint32,bool,uint8,uint64)[]",
-            name: "calls",
-          },
+          { type: "uint64", name: "pool_app_id" },
+          { type: "address", name: "authority" },
         ],
         returns: { type: "void" },
-      },
-      {
-        name: "is_settled",
-        args: [{ type: "byte[16]", name: "call_id" }],
-        returns: { type: "bool" },
       },
     ],
   });
 }
 
-function encodeMethodArgs(
-  methodName: string,
-  abi: ABIContract,
-  values: unknown[],
-): Uint8Array {
-  const method = abi.getMethodByName(methodName);
-  const enc = method.getSelector();
-  const args = method.args;
-  const parts: number[] = [...enc];
-  for (let i = 0; i < values.length; i++) {
-    const argType = args[i]?.type;
-    if (!argType || typeof argType === "string") {
-      throw new Error(`unsupported ABI arg type at index ${i}`);
-    }
-    const encoded = (argType as ABIType).encode(values[i] as never);
-    parts.push(...encoded);
-  }
-  return Uint8Array.from(parts);
+export function encodePoolInit(settlerAppId: number): Uint8Array[] {
+  return encodeMethodArgs("init", poolAbi(), [settlerAppId]);
 }
 
-export function encodeRegisterEndpoint(params: {
-  slug: string;
-  hostname: string;
-  apiPriceMicroUsdc: bigint;
-  contactAddress: string;
-  slaLatencyMs?: number;
-}): Uint8Array {
-  return encodeMethodArgs("register_endpoint", registryAbi(), [
-    encodeSlug(params.slug),
-    params.hostname,
-    params.apiPriceMicroUsdc,
-    params.contactAddress,
-    params.slaLatencyMs ?? 0,
+export function encodeSettlerInit(
+  poolAppId: number,
+  authorityAddress: string,
+): Uint8Array[] {
+  return encodeMethodArgs("init", settlerInitAbi(), [
+    poolAppId,
+    authorityAddress,
   ]);
 }
 
-export function encodeGetEndpoint(slug: string): Uint8Array {
-  return encodeMethodArgs("get_endpoint", registryAbi(), [encodeSlug(slug)]);
-}
-
-export function encodeSlugCount(): Uint8Array {
-  return registryAbi().getMethodByName("slug_count").getSelector();
-}
-
-export function encodeSlugAt(index: number): Uint8Array {
-  return encodeMethodArgs("slug_at", registryAbi(), [index]);
-}
-
-export function encodeProtocolPaused(): Uint8Array {
-  return registryAbi().getMethodByName("protocol_paused").getSelector();
-}
-
-export function encodeIsSettled(callId: string): Uint8Array {
-  return encodeMethodArgs("is_settled", settlerAbi(), [encodeCallId(callId)]);
-}
-
-export function encodeDepositEscrow(): Uint8Array {
-  return poolAbi().getMethodByName("deposit_escrow").getSelector();
-}
-
-export function encodeTopUp(slug: string): Uint8Array {
-  return encodeMethodArgs("top_up", poolAbi(), [encodeSlug(slug)]);
-}
-
-export function encodeSetEndpointSla(slug: string, slaLatencyMs: number): Uint8Array {
-  return encodeMethodArgs("set_endpoint_sla", registryAbi(), [
-    encodeSlug(slug),
-    slaLatencyMs,
+export function encodeSettleBatch(calls: SettleBatchCallInput[]): Uint8Array[] {
+  const events = calls.map((c) => [
+    encodeSlug(c.endpointSlug),
+    c.agentAddress,
+    encodeCallId(c.callId),
+    c.premiumMicroAlgos,
+    c.refundMicroAlgos,
+    c.latencyMs,
+    c.breach,
+    c.feeRecipientCountHint,
+    c.timestampSec,
   ]);
-}
-
-export function encodeUpdateEndpoint(params: {
-  slug: string;
-  hostname: string;
-  apiPriceMicroUsdc: bigint;
-  contactAddress: string;
-}): Uint8Array {
-  return encodeMethodArgs("update_endpoint", registryAbi(), [
-    encodeSlug(params.slug),
-    params.hostname,
-    params.apiPriceMicroUsdc,
-    params.contactAddress,
-  ]);
-}
-
-export function encodeSettleBatch(calls: SettleBatchCallInput[]): Uint8Array {
-  const events = calls.map((c) => ({
-    slug: encodeSlug(c.endpointSlug),
-    agent: c.agentAddress,
-    callId: encodeCallId(c.callId),
-    premium: c.premiumMicroAlgos,
-    refund: c.refundMicroAlgos,
-    latency: c.latencyMs,
-    breach: c.breach,
-    feeHint: c.feeRecipientCountHint,
-    timestamp: c.timestampSec,
-  }));
   return encodeMethodArgs("settle_batch", settlerAbi(), [events]);
 }
 

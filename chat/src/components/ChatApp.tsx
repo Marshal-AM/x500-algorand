@@ -22,18 +22,28 @@ export function ChatApp() {
   const [loading, setLoading] = useState(false);
   const [bootstrapping, setBootstrapping] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [merchantOrigin, setMerchantOrigin] = useState(
+    MERCHANT_ORIGINS.success,
+  );
 
   const loadBootstrap = useCallback(async (nextMode: ChatTestMode, signal?: AbortSignal) => {
     setBootstrapping(true);
     setError(null);
     try {
       const res = await fetch(`/api/bootstrap?mode=${nextMode}`, { signal });
-      const data = (await res.json()) as { logs?: string[]; error?: string };
+      const data = (await res.json()) as {
+        logs?: string[];
+        merchantOrigin?: string;
+        error?: string;
+      };
       if (!res.ok) {
         throw new Error(data.error ?? "Failed to load agent");
       }
       if (signal?.aborted) return;
       setLogs(data.logs ?? []);
+      setMerchantOrigin(
+        data.merchantOrigin?.trim() || MERCHANT_ORIGINS[nextMode],
+      );
     } catch (err) {
       if (signal?.aborted) return;
       const msg = err instanceof Error ? err.message : String(err);
@@ -56,6 +66,7 @@ export function ChatApp() {
     setMessages([]);
     setInput("");
     setError(null);
+    setMerchantOrigin(MERCHANT_ORIGINS[nextMode]);
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -124,10 +135,10 @@ export function ChatApp() {
         title="Insured agent chat"
         description={
           <>
-            ReAct agent with Groq calling the x500-insured weather API. Mode
-            selects merchant:{" "}
+            ReAct agent with Groq calling the x500-insured Algorand weather
+            API (x402 USDC + insurance). Mode selects merchant:{" "}
             <span className="font-mono text-xs text-primary">
-              {MERCHANT_ORIGINS[mode]}
+              {merchantOrigin}
             </span>
           </>
         }

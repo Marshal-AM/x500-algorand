@@ -17,3 +17,4 @@ export {
   AlgorandAdapter,
   type AlgorandAdapterOptions,
 } from "./algorand-adapter.js";
+export { resolveDeploymentsPath } from "./deployments-path.js";

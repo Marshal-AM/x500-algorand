@@ -2,7 +2,7 @@
 
 **Command-line tool for x500 — insured API calls and x402 USDC payments on Algorand testnet.**
 
-Wraps [`x500-sdk-algorand`](https://www.npmjs.com/package/x500-sdk-algorand) for quick testing, scripting, and CI. Merchant amounts are **microUSDC**; insurance escrow uses **microAlgos**.
+Wraps [`x500-agent-sdk`](https://www.npmjs.com/package/x500-agent-sdk) for quick testing, scripting, and CI. Merchant amounts are **microUSDC**; insurance escrow uses **microAlgos**.
 
 **V1 scope:** `--network testnet` only.
 
@@ -171,10 +171,10 @@ Merchants must register their public origin URL in the x500 dashboard (Pera / De
 
 ## Programmatic use
 
-For agents, LangChain tools, and production integrations, use **[x500-sdk-algorand](https://www.npmjs.com/package/x500-sdk-algorand)**:
+For agents, LangChain tools, and production integrations, use **[x500-agent-sdk](https://www.npmjs.com/package/x500-agent-sdk)**:
 
 ```bash
-npm install x500-sdk-algorand
+npm install x500-agent-sdk
 ```
 
 ---

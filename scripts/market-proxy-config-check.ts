@@ -1,4 +1,4 @@
-import { DEFAULT_MARKET_PROXY_URL } from "x500-sdk-algorand";
+import { DEFAULT_MARKET_PROXY_URL } from "x500-agent-sdk";
 
 function resolveProxyBase(): string {
   return (

@@ -8,7 +8,7 @@ import { runChatAgent } from "@/lib/agent/run-agent";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 180;
 
 function parseMode(value: unknown): ChatTestMode | null {
   if (value === "success" || value === "sla_breach") return value;

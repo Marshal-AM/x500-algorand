@@ -12,10 +12,11 @@ import {
   indexerAccountBalanceMicroAlgos,
   indexerSimulateAppCall,
   type TestnetDeployments,
-} from "@x500/protocol-algorand-v1-client";
+} from "x500-protocol-algorand-v1-client";
 import {
   ALGORAND_TESTNET_CHAIN,
   Phase2RequiredError,
+  USDC_TESTNET_ASA_ID,
   type AgentEligibility,
   type ChainAdapter,
   type ChainDescriptor,
@@ -23,6 +24,7 @@ import {
   type SettleBatchInput,
   type SettleBatchResult,
 } from "./types.js";
+import { resolveDeploymentsPath } from "./deployments-path.js";
 
 export interface AlgorandAdapterOptions {
   indexerUrl?: string;
@@ -50,8 +52,14 @@ export class AlgorandAdapter implements ChainAdapter {
   constructor(opts: AlgorandAdapterOptions = {}) {
     this.chain = {
       ...ALGORAND_TESTNET_CHAIN,
-      indexerUrl: opts.indexerUrl ?? ALGORAND_TESTNET_CHAIN.indexerUrl,
-      algodUrl: opts.algodUrl ?? ALGORAND_TESTNET_CHAIN.algodUrl,
+      indexerUrl:
+        opts.indexerUrl ??
+        process.env.ALGORAND_INDEXER_URL?.trim() ??
+        ALGORAND_TESTNET_CHAIN.indexerUrl,
+      algodUrl:
+        opts.algodUrl ??
+        process.env.ALGORAND_ALGOD_URL?.trim() ??
+        ALGORAND_TESTNET_CHAIN.algodUrl,
     };
     this.fetchImpl = opts.fetchImpl ?? fetch;
     this.deploymentsPath = opts.deploymentsPath;
@@ -67,7 +75,8 @@ export class AlgorandAdapter implements ChainAdapter {
       return this.cachedDeployments;
     }
     try {
-      this.cachedDeployments = loadDeployments(this.deploymentsPath);
+      const path = resolveDeploymentsPath(this.deploymentsPath);
+      this.cachedDeployments = loadDeployments(path);
       return this.cachedDeployments;
     } catch {
       this.cachedDeployments = null;
@@ -103,9 +112,9 @@ export class AlgorandAdapter implements ChainAdapter {
     try {
       const raw = await indexerSimulateAppCall(
         d.registry.appId,
-        [encodeGetEndpoint(slug)],
+        encodeGetEndpoint(slug),
         {
-          indexerUrl: this.chain.indexerUrl,
+          algodUrl: this.chain.algodUrl,
           fetchImpl: this.fetchImpl,
           boxes: [{ app: d.registry.appId, name: encodeSlug(slug) }],
         },
@@ -127,7 +136,11 @@ export class AlgorandAdapter implements ChainAdapter {
       };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes("not found") || msg.includes("rejected")) {
+      if (
+        msg.includes("not found") ||
+        msg.includes("rejected") ||
+        msg.includes("empty return")
+      ) {
         return null;
       }
       throw err;
@@ -138,11 +151,11 @@ export class AlgorandAdapter implements ChainAdapter {
     const d = this.requireDeployments();
     const raw = await indexerSimulateAppCall(
       d.settler.appId,
-      [encodeIsSettled(callId)],
+      encodeIsSettled(callId),
       {
-        indexerUrl: this.chain.indexerUrl,
+        algodUrl: this.chain.algodUrl,
         fetchImpl: this.fetchImpl,
-        boxes: [{ app: d.settler.appId, name: encodeCallId(callId) }],
+        boxes: [{ app: d.settler.appId, name: settlerCallBoxName(callId) }],
       },
     );
     if (!raw || raw.length === 0) return false;
@@ -188,14 +201,54 @@ export class AlgorandAdapter implements ChainAdapter {
       timestampSec: BigInt(Math.floor(Date.now() / 1000)),
     }));
 
-    const appArgs = [encodeSettleBatch(calls)];
+    const boxes: algosdk.BoxReference[] = [];
+    const slugBytes = encodeSlug(input.slug);
+    for (const c of calls) {
+      boxes.push({
+        appIndex: d.settler.appId,
+        name: settlerCallBoxName(c.callId),
+      });
+      boxes.push({
+        appIndex: d.pool.appId,
+        name: slugBytes,
+      });
+      boxes.push({
+        appIndex: d.pool.appId,
+        name: poolEscrowBoxName(c.agentAddress),
+      });
+    }
+
+    const appArgs = encodeSettleBatch(calls);
+    // Inner USDC refunds require agent accounts in the txn accounts array.
+    const refundAgents = [
+      ...new Set(
+        input.calls
+          .filter(
+            (c) =>
+              c.outcome === "breach" &&
+              c.refundMicroAlgos > 0n,
+          )
+          .map((c) => c.agentAddress),
+      ),
+    ];
     const suggestedParams = await algod.getTransactionParams().do();
     const txn = algosdk.makeApplicationCallTxnFromObject({
       sender: account.addr,
       appIndex: d.settler.appId,
       onComplete: algosdk.OnApplicationComplete.NoOpOC,
       appArgs,
-      suggestedParams,
+      accounts: refundAgents,
+      foreignApps: [d.pool.appId],
+      foreignAssets: [Number(USDC_TESTNET_ASA_ID)],
+      boxes,
+      suggestedParams: {
+        ...suggestedParams,
+        fee:
+          Number(suggestedParams.fee ?? 1000) +
+          2000 +
+          refundAgents.length * 1000,
+        flatFee: true,
+      },
     });
     const signed = txn.signTxn(account.sk);
     const { txid } = await algod.sendRawTransaction(signed).do();
@@ -214,12 +267,16 @@ export class AlgorandAdapter implements ChainAdapter {
     address: string,
     premiumMicroAlgos: bigint,
   ): Promise<AgentEligibility> {
-    const algoMicroAlgos = await this.getNativeAlgoBalance(address);
-    if (algoMicroAlgos < premiumMicroAlgos) {
+    const d = this.requireDeployments();
+    const escrowMicroAlgos = await this.readPoolEscrowMicro(
+      d.pool.appId,
+      address,
+    );
+    if (escrowMicroAlgos < premiumMicroAlgos) {
       return {
         eligible: false,
         mode: "balance_gte_premium_weak",
-        algoMicroAlgos,
+        algoMicroAlgos: escrowMicroAlgos,
         requiredMicroAlgos: premiumMicroAlgos,
         reason: "insufficient_balance",
       };
@@ -227,9 +284,26 @@ export class AlgorandAdapter implements ChainAdapter {
     return {
       eligible: true,
       mode: "balance_gte_premium_weak",
-      algoMicroAlgos,
+      algoMicroAlgos: escrowMicroAlgos,
       requiredMicroAlgos: premiumMicroAlgos,
     };
+  }
+
+  /** Read agent escrow from pool box (more reliable than simulate for escrow_of). */
+  private async readPoolEscrowMicro(
+    poolAppId: number,
+    agentAddress: string,
+  ): Promise<bigint> {
+    const algod = new algosdk.Algodv2("", this.chain.algodUrl, "");
+    const boxName = poolEscrowBoxName(agentAddress);
+    try {
+      const box = await algod.getApplicationBoxByName(poolAppId, boxName).do();
+      const buf = Buffer.from(box.value);
+      if (buf.length < 8) return 0n;
+      return buf.readBigUInt64BE(buf.length - 8);
+    } catch {
+      return 0n;
+    }
   }
 
   async indexerAccountExists(address: string): Promise<boolean> {
@@ -240,11 +314,11 @@ export class AlgorandAdapter implements ChainAdapter {
 
   private async simulate(
     appId: number,
-    appArg: Uint8Array,
+    appArgs: Uint8Array[],
     kind: "uint64" | "bool" | "bytes",
   ): Promise<unknown> {
-    const raw = await indexerSimulateAppCall(appId, [appArg], {
-      indexerUrl: this.chain.indexerUrl,
+    const raw = await indexerSimulateAppCall(appId, appArgs, {
+      algodUrl: this.chain.algodUrl,
       fetchImpl: this.fetchImpl,
     });
     if (!raw) return kind === "uint64" ? 0 : kind === "bool" ? false : null;
@@ -267,4 +341,13 @@ function encodeCallId(callId: string): Uint8Array {
   const cleaned = callId.replace(/-/g, "").replace(/^0x/, "");
   const hex = cleaned.padEnd(32, "0").slice(0, 32);
   return Buffer.from(hex, "hex");
+}
+
+function settlerCallBoxName(callId: string): Uint8Array {
+  return Uint8Array.from([...Buffer.from("s"), ...encodeCallId(callId)]);
+}
+
+function poolEscrowBoxName(agentAddress: string): Uint8Array {
+  const pk = algosdk.decodeAddress(agentAddress).publicKey;
+  return Uint8Array.from([...Buffer.from("e"), ...pk]);
 }

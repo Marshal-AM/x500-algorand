@@ -17,6 +17,13 @@ export {
   type EconomicsPool,
 } from "./economics.js";
 export {
+  DEFAULT_FLAT_PREMIUM_MICRO_USDC,
+  DEFAULT_IMPUTED_COST_MICRO_USDC,
+  LEGACY_FLAT_PREMIUM_MICRO_USDC,
+  LEGACY_IMPUTED_COST_MICRO_USDC,
+} from "./economicsDefaults.js";
+export { parseX402PaymentAmountMicro, readX402AmountMicro } from "./x402PaymentAmount.js";
+export {
   type BalanceCheck,
   type BalanceCheckResult,
   type BalanceCheckRejectionReason,
@@ -32,6 +39,13 @@ export {
   attachX500Headers,
   type X500HeaderInputs,
 } from "./headers.js";
+export {
+  pushIndexerEvent,
+  pendingIndexerBody,
+  breachFromOutcome,
+  assetFromSettlement,
+  type IndexerPushBody,
+} from "./indexerPush.js";
 export {
   ALGORAND_TESTNET,
   USDC_TESTNET_ASA_ID,

@@ -12,7 +12,8 @@ import algosdk from "algosdk";
 import {
   encodeRegisterEndpoint,
   encodeSlug,
-} from "@x500/protocol-algorand-v1-client";
+  encodeSlugIndexBox,
+} from "x500-protocol-algorand-v1-client";
 import {
   algodClient,
   deployments,
@@ -39,21 +40,45 @@ async function main(): Promise<void> {
   );
 
   const d = deployments();
+  const algod = algodClient();
+  const account = operatorAccount();
+  const appInfo = await algod.getApplicationByID(d.registry.appId).do();
+  let slugIndex = 0;
+  for (const kv of appInfo.params.globalState ?? []) {
+    const key = Buffer.from(kv.key).toString("utf8");
+    if (key === "slugCount") {
+      slugIndex = Number(kv.value.uint ?? 0);
+      break;
+    }
+  }
+
+  const suggestedParams = await algod.getTransactionParams().do();
+  const registryAppAddr = algosdk.getApplicationAddress(d.registry.appId);
+  const payTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+    sender: account.addr,
+    receiver: registryAppAddr,
+    amount: 250_000,
+    suggestedParams,
+  });
+
   const txid = await submitAppCall({
     appId: d.registry.appId,
-    appArgs: [
-      encodeRegisterEndpoint({
-        slug,
-        hostname,
-        apiPriceMicroUsdc: apiPrice,
-        contactAddress: contact,
-        slaLatencyMs: Number(process.env.X500_REGISTER_SLA_MS ?? "60000"),
-      }),
-    ],
+    payment: payTxn,
+    appArgs: encodeRegisterEndpoint({
+      slug,
+      hostname,
+      apiPriceMicroUsdc: apiPrice,
+      contactAddress: contact,
+      slaLatencyMs: Number(process.env.X500_REGISTER_SLA_MS ?? "60000"),
+    }),
     boxes: [
       {
         appIndex: d.registry.appId,
         name: encodeSlug(slug),
+      },
+      {
+        appIndex: d.registry.appId,
+        name: encodeSlugIndexBox(slugIndex),
       },
     ],
   });
@@ -72,10 +97,10 @@ async function main(): Promise<void> {
         hostname,
         sla_ms: Number(process.env.X500_REGISTER_SLA_MS ?? "60000"),
         flat_premium_micro_algos: Number(
-          process.env.X500_REGISTER_PREMIUM_MICRO_ALGOS ?? "1000000",
+          process.env.X500_REGISTER_PREMIUM_MICRO_ALGOS ?? "10000",
         ),
         imputed_cost_micro_algos: Number(
-          process.env.X500_REGISTER_IMPUTED_MICRO_ALGOS ?? "10000000",
+          process.env.X500_REGISTER_IMPUTED_MICRO_ALGOS ?? "100000",
         ),
         api_price_micro_usdc: Number(apiPrice),
         contact_address: contact,

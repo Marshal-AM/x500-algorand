@@ -12,11 +12,11 @@
   "dependencies": {
     "@hono/node-server": "^1.13.7",
     "@ngrok/ngrok": "^1.4.1",
-    "@x402/avm": "^2.12.0",
-    "@x402/core": "^2.12.0",
-    "@x402/hono": "^2.12.0",
+    "@x402/avm": "2.12.0",
+    "@x402/core": "2.12.0",
+    "@x402/hono": "2.12.0",
     "hono": "^4.6.14",
-    "x500-sdk-algorand": "workspace:*"
+    "x500-agent-sdk": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
