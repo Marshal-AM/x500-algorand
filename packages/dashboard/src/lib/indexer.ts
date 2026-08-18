@@ -28,7 +28,7 @@ export function formatMicroUsdc(
 export function indexerBase(): string {
   return (
     process.env.NEXT_PUBLIC_INDEXER_URL?.trim() ||
-    "https://xindexer-5341291432.us-central1.run.app"
+    "https://indexer-production-ab11.up.railway.app"
   ).replace(/\/$/, "");
 }
 

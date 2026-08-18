@@ -3,7 +3,7 @@
  */
 const INDEXER_URL = (
   process.env.INDEXER_URL?.trim() ||
-  "https://xindexer-432303484897.us-central1.run.app"
+  "https://indexer-production-ab11.up.railway.app"
 ).replace(/\/$/, "");
 
 async function main(): Promise<void> {

@@ -3,13 +3,15 @@ import { join } from "node:path";
 import { loadDeployments } from "x500-protocol-algorand-v1-client";
 
 /** Live Algorand testnet defaults (V1). Override via env or createX500 options. */
-export const DEFAULT_MARKET_PROXY_URL = "http://127.0.0.1:8788" as const;
-export const DEFAULT_INDEXER_URL = "http://127.0.0.1:8787" as const;
+export const DEFAULT_MARKET_PROXY_URL =
+  "https://market-proxy-production.up.railway.app" as const;
+export const DEFAULT_INDEXER_URL =
+  "https://indexer-production-ab11.up.railway.app" as const;
 export const DEFAULT_FACILITATOR_URL =
   "https://facilitator.goplausible.xyz" as const;
 
 /** Testnet pool app id — escrow deposits for agent insurance premiums. */
-export const DEFAULT_POOL_APP_ID = 0 as const;
+export const DEFAULT_POOL_APP_ID = 769443375 as const;
 
 function poolAppIdFromDeployments(): number | null {
   const path =

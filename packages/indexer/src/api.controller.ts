@@ -70,7 +70,8 @@ export class ApiController {
     }
 
     const proxyBase = (
-      process.env.MARKET_PROXY_URL?.trim() || "http://127.0.0.1:8788"
+      process.env.MARKET_PROXY_URL?.trim() ||
+      "https://market-proxy-production.up.railway.app"
     ).replace(/\/$/, "");
 
     return {

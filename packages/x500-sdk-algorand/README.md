@@ -78,8 +78,8 @@ The SDK adds `x-x500-agent-address` on insured requests and parses response head
 
 | Option | Env var | Default |
 |--------|---------|---------|
-| `proxyUrl` | `MARKET_PROXY_URL` or `PROXY_URL` | `http://127.0.0.1:8788` |
-| `indexerUrl` | `INDEXER_URL` | `http://127.0.0.1:8787` |
+| `proxyUrl` | `MARKET_PROXY_URL` or `PROXY_URL` | `https://market-proxy-production.up.railway.app` |
+| `indexerUrl` | `INDEXER_URL` | `https://indexer-production-ab11.up.railway.app` |
 | `facilitatorUrl` | `FACILITATOR_URL` | `https://facilitator.goplausible.xyz` |
 | `poolAppId` | `X500_POOL_APP_ID` | from deployments |
 | `deploymentsPath` | `X500_DEPLOYMENTS_PATH` | `config/deployments.algorand.testnet.json` |

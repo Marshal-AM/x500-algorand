@@ -32,7 +32,7 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 const DEFAULT_PROXY =
   process.env.NEXT_PUBLIC_MARKET_PROXY_URL?.trim() ||
-  "https://xmarket-5341291432.us-central1.run.app";
+  "https://market-proxy-production.up.railway.app";
 
 const STEPS = ["Wallet", "API", "Terms", "Review"] as const;
 
