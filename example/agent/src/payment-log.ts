@@ -142,13 +142,18 @@ export async function logPaymentBreakdown(opts: {
     console.log(`x402 settlement: ${loraTxUrl(x402Tx)}`);
   }
   console.log(`Insurance premium: ${formatMicroUsdc(premium)}`);
-  if (BigInt(refund) > 0n) {
-    console.log(`Refund: ${formatMicroUsdc(refund)}`);
-  }
   if (insuranceTx) {
     console.log(`Insurance settlement: ${loraTxUrl(insuranceTx)}`);
-  } else if (settlementPending) {
+  } else if (settlementPending && BigInt(refund) === 0n) {
     console.log("Insurance settlement: pending (settler)");
+  }
+  if (BigInt(refund) > 0n) {
+    console.log(`Refund: ${formatMicroUsdc(refund)}`);
+    if (insuranceTx) {
+      console.log(`Refund settlement: ${loraTxUrl(insuranceTx)}`);
+    } else if (settlementPending) {
+      console.log("Refund settlement: pending (settler)");
+    }
   }
   console.log("");
 }

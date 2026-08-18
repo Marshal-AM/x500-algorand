@@ -221,6 +221,10 @@ async function main(): Promise<void> {
     algosdk.secretKeyToMnemonic(agent.sk),
   );
   existing.set(
+    "ALGORAND_MERCHANT_MNEMONIC",
+    algosdk.secretKeyToMnemonic(merchant.sk),
+  );
+  existing.set(
     "X500_DEPLOYMENTS_PATH",
     "./config/deployments.algorand.testnet.json",
   );
