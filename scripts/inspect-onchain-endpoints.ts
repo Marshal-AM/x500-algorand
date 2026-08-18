@@ -1,5 +1,6 @@
 /**
- * Dump on-chain registry endpoints (indexer does not write these).
+ * Local debug: dump every endpoint currently in the on-chain registry.
+ * Optional extra slugs: `tsx scripts/inspect-onchain-endpoints.ts some-slug`
  */
 import { AlgorandAdapter } from "@x500/shared";
 
@@ -7,8 +8,9 @@ async function main(): Promise<void> {
   const adapter = new AlgorandAdapter({
     deploymentsPath: process.env.X500_DEPLOYMENTS_PATH?.trim(),
   });
+  const extraSlugs = process.argv.slice(2).map((s) => s.trim()).filter(Boolean);
   const eps = await adapter.readEndpointConfigs();
-  console.log(`on-chain endpoints via slugCount: ${eps.length}`);
+  console.log(`on-chain endpoints: ${eps.length}`);
   for (const ep of eps) {
     console.log(
       JSON.stringify(
@@ -29,7 +31,7 @@ async function main(): Promise<void> {
     );
   }
 
-  for (const slug of ["pay-default", "weather-slow"]) {
+  for (const slug of extraSlugs) {
     const ep = await adapter.getEndpoint(slug);
     console.log(
       `getEndpoint(${slug})`,

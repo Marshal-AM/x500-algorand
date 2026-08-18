@@ -5,8 +5,10 @@ import {
   encodeIsSettled,
   encodeProtocolPaused,
   encodeSettleBatch,
+  encodeSlug,
   encodeSlugAt,
   encodeSlugCount,
+  encodeSlugIndexBox,
   bytes16ToSlug,
   loadDeployments,
   indexerAccountBalanceMicroAlgos,
@@ -86,25 +88,53 @@ export class AlgorandAdapter implements ChainAdapter {
 
   async readEndpointConfigs(): Promise<ReadonlyArray<EndpointConfigSnapshot>> {
     const d = this.requireDeployments();
-    const countRaw = await this.simulate(
-      d.registry.appId,
-      encodeSlugCount(),
-      "uint64",
-    );
-    const count = Number(countRaw ?? 0);
+    const slugs = await this.listRegistrySlugs(d.registry.appId);
     const out: EndpointConfigSnapshot[] = [];
+    for (const slug of slugs) {
+      try {
+        const ep = await this.getEndpoint(slug);
+        if (ep) out.push(ep);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn(`[algorand-adapter] getEndpoint(${slug}) failed: ${msg}`);
+      }
+    }
+    return out;
+  }
+
+  private async listRegistrySlugs(appId: number): Promise<string[]> {
+    const algod = new algosdk.Algodv2("", this.chain.algodUrl, "");
+    try {
+      const listed = await algod.getApplicationBoxes(appId).do();
+      const slugs: string[] = [];
+      for (const box of listed.boxes ?? []) {
+        const name = Buffer.from(box.name as Uint8Array);
+        if (name.length >= 3 && name.subarray(0, 3).toString("utf8") === "idx") {
+          continue;
+        }
+        const slug = bytes16ToSlug(Uint8Array.from(name));
+        if (slug) slugs.push(slug);
+      }
+      if (slugs.length > 0) return slugs;
+    } catch {
+      // fall through to slug_at simulate
+    }
+
+    const countRaw = await this.simulate(appId, encodeSlugCount(), "uint64");
+    const count = Number(countRaw ?? 0);
+    const slugs: string[] = [];
     for (let i = 0; i < count; i++) {
       const slugBytes = await this.simulate(
-        d.registry.appId,
+        appId,
         encodeSlugAt(i),
         "bytes",
+        [{ app: appId, name: encodeSlugIndexBox(i) }],
       );
       if (!slugBytes) continue;
       const slug = bytes16ToSlug(slugBytes as Uint8Array);
-      const ep = await this.getEndpoint(slug);
-      if (ep) out.push(ep);
+      if (slug) slugs.push(slug);
     }
-    return out;
+    return slugs;
   }
 
   async getEndpoint(slug: string): Promise<EndpointConfigSnapshot | null> {
@@ -139,7 +169,9 @@ export class AlgorandAdapter implements ChainAdapter {
       if (
         msg.includes("not found") ||
         msg.includes("rejected") ||
-        msg.includes("empty return")
+        msg.includes("empty return") ||
+        msg.includes("logic eval") ||
+        msg.includes("Box")
       ) {
         return null;
       }
@@ -316,10 +348,12 @@ export class AlgorandAdapter implements ChainAdapter {
     appId: number,
     appArgs: Uint8Array[],
     kind: "uint64" | "bool" | "bytes",
+    boxes?: Array<{ app: number; name: Uint8Array }>,
   ): Promise<unknown> {
     const raw = await indexerSimulateAppCall(appId, appArgs, {
       algodUrl: this.chain.algodUrl,
       fetchImpl: this.fetchImpl,
+      boxes,
     });
     if (!raw) return kind === "uint64" ? 0 : kind === "bool" ? false : null;
     if (kind === "uint64") {
@@ -329,12 +363,6 @@ export class AlgorandAdapter implements ChainAdapter {
     if (kind === "bool") return raw[0] === 1;
     return raw;
   }
-}
-
-function encodeSlug(slug: string): Uint8Array {
-  const buf = Buffer.alloc(16, 0);
-  Buffer.from(slug, "utf8").copy(buf);
-  return buf;
 }
 
 function encodeCallId(callId: string): Uint8Array {
