@@ -1,6 +1,6 @@
 {
   "name": "x500-algorand",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "private": false,
   "description": "x500 Algorand CLI — insured API calls and x402 USDC payments on Algorand testnet",
   "type": "module",

@@ -12,3 +12,9 @@ docs/
 .venv-algokit/
 .algokit_ci_token.txt
 .tools/
+
+# npm publish auth files (token interpolation only belongs in CI env, never the repo)
+packages/protocol-algorand-v1-client/.npmrc
+packages/x500-sdk-algorand/.npmrc
+packages/x500-algorand/.npmrc
+reference.md
