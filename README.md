@@ -12,9 +12,9 @@ Merchant API payments use **x402 USDC** (testnet ASA `10458941`). Insurance prem
 
 | Link | |
 |------|---|
-| npm ┬╖ x500-agent-sdk | [![npm](https://img.shields.io/badge/npm-x500--agent--sdk-8259EF?style=flat-square)](https://www.npmjs.com/package/x500-agent-sdk) |
-| npm ┬╖ x500-algorand | [![npm](https://img.shields.io/badge/npm-x500--algorand-8259EF?style=flat-square)](https://www.npmjs.com/package/x500-algorand) |
-| npm ┬╖ protocol client | [![npm](https://img.shields.io/badge/npm-protocol--client-8259EF?style=flat-square)](https://www.npmjs.com/package/x500-protocol-algorand-v1-client) |
+| npm x500-agent-sdk | [![npm](https://img.shields.io/badge/npm-x500--agent--sdk-8259EF?style=flat-square)](https://www.npmjs.com/package/x500-agent-sdk) |
+| npm x500-algorand | [![npm](https://img.shields.io/badge/npm-x500--algorand-8259EF?style=flat-square)](https://www.npmjs.com/package/x500-algorand) |
+| npm protocol client | [![npm](https://img.shields.io/badge/npm-protocol--client-8259EF?style=flat-square)](https://www.npmjs.com/package/x500-protocol-algorand-v1-client) |
 | Lora explorer | [![View](https://img.shields.io/badge/View-Lora_Testnet-8259EF?style=flat-square)](https://lora.algokit.io/testnet) |
 | Live Dashboard | [![View](https://img.shields.io/badge/View-Dashboard-8259EF?style=flat-square)](https://dashboard-production-915f.up.railway.app/endpoints) |
 | Live Chat Demo | [![View](https://img.shields.io/badge/View-Chat_Demo-8259EF?style=flat-square)](https://chat-production-acf6.up.railway.app/) |
